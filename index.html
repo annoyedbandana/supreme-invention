@@ -646,7 +646,7 @@
                     <h3>🎯 My Dashboard</h3>
                     <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px;">Last 30 days per habit</p>
                     <div style="display: flex; justify-content: center; padding: 20px;">
-                        <canvas id="multiRingChart" width="320" height="420"></canvas>
+                        <canvas id="multiRingChart" width="360" height="520"></canvas>
                     </div>
                     <!-- Goal Filter moved here -->
                     <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--lavender);">
@@ -1116,8 +1116,9 @@
             
             const last30Days = getLast30DaysData();
             const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-            const maxRadius = Math.min(centerX, centerY) - 20;
+            const circleAreaHeight = 340; // Fixed area for the circle
+            const centerY = circleAreaHeight / 2 + 10; // Center in the circle area
+            const maxRadius = Math.min(centerX - 20, circleAreaHeight / 2 - 20);
             
             // Calculate ring dimensions
             const numRings = selectedGoals.length;
@@ -1134,7 +1135,7 @@
             
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // More distinct colors for each ring
+            // Expanded color palette for 15+ goals - more distinct colors
             const ringColors = [
                 'hsla(270, 70%, 65%, 0.9)',  // Purple
                 'hsla(320, 70%, 65%, 0.9)',  // Pink-purple
@@ -1142,7 +1143,15 @@
                 'hsla(160, 60%, 55%, 0.9)',  // Teal
                 'hsla(30, 70%, 60%, 0.9)',   // Orange
                 'hsla(100, 60%, 55%, 0.9)',  // Green
-                'hsla(350, 70%, 65%, 0.9)'   // Red-pink
+                'hsla(350, 70%, 65%, 0.9)',  // Red-pink
+                'hsla(180, 65%, 55%, 0.9)',  // Cyan
+                'hsla(45, 75%, 60%, 0.9)',   // Gold
+                'hsla(280, 65%, 60%, 0.9)',  // Violet
+                'hsla(15, 70%, 65%, 0.9)',   // Coral
+                'hsla(140, 60%, 50%, 0.9)',  // Emerald
+                'hsla(240, 70%, 65%, 0.9)',  // Indigo
+                'hsla(60, 70%, 60%, 0.9)',   // Yellow
+                'hsla(300, 65%, 60%, 0.9)'   // Magenta
             ];
             
             // Draw each ring (from outer to inner)
@@ -1187,21 +1196,28 @@
             ctx.lineWidth = 1;
             ctx.stroke();
             
-            // Add legend below the circle
-            const legendY = canvas.height - 15 - (selectedGoals.length * 16);
+            // Add legend below the circle with FIXED spacing (starts after circle area)
+            const legendStartY = circleAreaHeight + 20; // 20px gap after circle area
             
             selectedGoals.forEach((goalIndex, idx) => {
-                const y = legendY + (idx * 16);
+                const y = legendStartY + (idx * 16);
                 
                 // Color box
                 ctx.fillStyle = ringColors[idx % ringColors.length];
-                ctx.fillRect(10, y, 12, 12);
+                ctx.fillRect(15, y, 12, 12);
                 
                 // Goal name
                 ctx.font = '11px Helvetica Neue, Helvetica, Arial, sans-serif';
                 ctx.fillStyle = '#4a3f5c';
                 ctx.textAlign = 'left';
-                ctx.fillText(goals[goalIndex], 26, y + 9);
+                
+                // Truncate very long goal names for legend
+                let goalName = goals[goalIndex];
+                if (goalName.length > 35) {
+                    goalName = goalName.substring(0, 33) + '...';
+                }
+                
+                ctx.fillText(goalName, 31, y + 9);
             });
         }
         
