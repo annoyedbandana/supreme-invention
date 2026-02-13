@@ -550,12 +550,13 @@
         .goal-filter-item {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
+            gap: 6px;
+            padding: 6px 10px;
             background: var(--surface-hover);
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
             transition: all 0.3s;
+            font-size: 0.85rem;
         }
         
         .goal-filter-item:hover {
@@ -563,13 +564,13 @@
         }
         
         .goal-filter-checkbox {
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             cursor: pointer;
         }
         
         .goal-filter-label {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: var(--text);
             cursor: pointer;
         }
@@ -638,20 +639,19 @@
         
         <!-- STATS VIEW -->
         <div id="statsView" class="section">
-            <!-- Goal Filter for Multi-Ring Chart -->
-            <div style="background: var(--surface); padding: 20px; border-radius: 16px; margin-bottom: 20px;">
-                <h3 style="font-size: 1rem; margin-bottom: 15px; color: var(--text);">Filter Goals (for Multi-Ring Chart)</h3>
-                <div id="goalFilter" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
-            </div>
-            
             <!-- Three Donut Charts -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px;">
-                <!-- Option A: Multi-Ring -->
+                <!-- Option A: Circular Heatmap -->
                 <div class="chart-box">
-                    <h3>🎯 Goal Consistency (Last 30 Days)</h3>
-                    <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px;">Each ring = one goal</p>
+                    <h3>🎯 My Dashboard</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px;">Last 30 days per habit</p>
                     <div style="display: flex; justify-content: center; padding: 20px;">
-                        <canvas id="multiRingChart" width="250" height="250"></canvas>
+                        <canvas id="multiRingChart" width="320" height="420"></canvas>
+                    </div>
+                    <!-- Goal Filter moved here -->
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--lavender);">
+                        <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 10px;">Show/Hide Habits:</p>
+                        <div id="goalFilter" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
                     </div>
                 </div>
                 
@@ -1117,7 +1117,7 @@
             const last30Days = getLast30DaysData();
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
-            const maxRadius = Math.min(centerX, centerY) - 10;
+            const maxRadius = Math.min(centerX, centerY) - 20;
             
             // Calculate ring dimensions
             const numRings = selectedGoals.length;
@@ -1126,22 +1126,33 @@
                 ctx.font = '14px Helvetica Neue, Helvetica, Arial, sans-serif';
                 ctx.fillStyle = '#8a7d9b';
                 ctx.textAlign = 'center';
-                ctx.fillText('Select goals to view', centerX, centerY);
+                ctx.fillText('Select habits below to view', centerX, centerY);
                 return;
             }
             
-            const ringWidth = (maxRadius - 30) / numRings;
+            const ringWidth = (maxRadius - 20) / numRings;
             
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // More distinct colors for each ring
+            const ringColors = [
+                'hsla(270, 70%, 65%, 0.9)',  // Purple
+                'hsla(320, 70%, 65%, 0.9)',  // Pink-purple
+                'hsla(200, 70%, 60%, 0.9)',  // Blue
+                'hsla(160, 60%, 55%, 0.9)',  // Teal
+                'hsla(30, 70%, 60%, 0.9)',   // Orange
+                'hsla(100, 60%, 55%, 0.9)',  // Green
+                'hsla(350, 70%, 65%, 0.9)'   // Red-pink
+            ];
             
             // Draw each ring (from outer to inner)
             selectedGoals.forEach((goalIndex, ringIdx) => {
                 const outerRadius = maxRadius - (ringIdx * ringWidth);
                 const innerRadius = outerRadius - ringWidth + 2;
                 
-                // Draw 30 blocks (one per day)
+                // Draw 30 blocks (full circle)
                 const blockAngle = (2 * Math.PI) / 30;
-                const gapAngle = blockAngle * 0.1; // Small gap between blocks
+                const gapAngle = blockAngle * 0.1;
                 
                 last30Days.forEach((day, dayIdx) => {
                     const startAngle = dayIdx * blockAngle - Math.PI / 2; // Start at top
@@ -1150,7 +1161,7 @@
                     // Determine color based on completion
                     let color;
                     if (day.data[goalIndex]) {
-                        color = `hsla(${270 + ringIdx * 15}, 60%, 70%, 0.9)`; // Done - purple shades
+                        color = ringColors[ringIdx % ringColors.length]; // Done - distinct color per ring
                     } else if (data[day.date]) {
                         color = '#ffccd5'; // Not done - pink
                     } else {
@@ -1167,39 +1178,30 @@
                 });
             });
             
-            // Draw center circle with legend
+            // Draw center circle
             ctx.beginPath();
-            ctx.arc(centerX, centerY, selectedGoals.length > 0 ? maxRadius - (numRings * ringWidth) : 30, 0, 2 * Math.PI);
+            ctx.arc(centerX, centerY, maxRadius - (numRings * ringWidth), 0, 2 * Math.PI);
             ctx.fillStyle = 'white';
             ctx.fill();
+            ctx.strokeStyle = '#e0c9f5';
+            ctx.lineWidth = 1;
+            ctx.stroke();
             
-            // Add text in center
-            ctx.font = 'bold 16px Helvetica Neue, Helvetica, Arial, sans-serif';
-            ctx.fillStyle = '#d4a5f9';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('30 Days', centerX, centerY - 10);
-            
-            ctx.font = '12px Helvetica Neue, Helvetica, Arial, sans-serif';
-            ctx.fillStyle = '#8a7d9b';
-            ctx.fillText('per ring', centerX, centerY + 10);
-            
-            // Draw legend below
-            const legendY = canvas.height - 80;
-            const legendStartX = 20;
+            // Add legend below the circle
+            const legendY = canvas.height - 15 - (selectedGoals.length * 16);
             
             selectedGoals.forEach((goalIndex, idx) => {
                 const y = legendY + (idx * 16);
                 
                 // Color box
-                ctx.fillStyle = `hsla(${270 + idx * 15}, 60%, 70%, 0.9)`;
-                ctx.fillRect(legendStartX, y, 12, 12);
+                ctx.fillStyle = ringColors[idx % ringColors.length];
+                ctx.fillRect(10, y, 12, 12);
                 
                 // Goal name
                 ctx.font = '11px Helvetica Neue, Helvetica, Arial, sans-serif';
                 ctx.fillStyle = '#4a3f5c';
                 ctx.textAlign = 'left';
-                ctx.fillText(goals[goalIndex], legendStartX + 18, y + 9);
+                ctx.fillText(goals[goalIndex], 26, y + 9);
             });
         }
         
