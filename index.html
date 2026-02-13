@@ -1104,79 +1104,102 @@
             return last30Days;
         }
         
-        // Option A: Multi-Ring Donut Chart
+        // Option A: Multi-Ring Circular Heatmap (each day as a block)
         function renderMultiRingChart() {
             const canvas = document.getElementById('multiRingChart');
             const ctx = canvas.getContext('2d');
             
             if (multiRingChartInstance) {
                 multiRingChartInstance.destroy();
+                multiRingChartInstance = null;
             }
             
             const last30Days = getLast30DaysData();
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const maxRadius = Math.min(centerX, centerY) - 10;
             
-            // Calculate completion percentage for each selected goal
-            const datasets = selectedGoals.map((goalIndex, idx) => {
-                const completed = last30Days.filter(day => day.data[goalIndex]).length;
-                const percentage = (completed / 30) * 100;
+            // Calculate ring dimensions
+            const numRings = selectedGoals.length;
+            if (numRings === 0) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.font = '14px Helvetica Neue, Helvetica, Arial, sans-serif';
+                ctx.fillStyle = '#8a7d9b';
+                ctx.textAlign = 'center';
+                ctx.fillText('Select goals to view', centerX, centerY);
+                return;
+            }
+            
+            const ringWidth = (maxRadius - 30) / numRings;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw each ring (from outer to inner)
+            selectedGoals.forEach((goalIndex, ringIdx) => {
+                const outerRadius = maxRadius - (ringIdx * ringWidth);
+                const innerRadius = outerRadius - ringWidth + 2;
                 
-                return {
-                    label: goals[goalIndex],
-                    data: [percentage, 100 - percentage],
-                    backgroundColor: [
-                        `hsla(${270 + idx * 15}, 60%, 70%, 0.8)`,
-                        'rgba(229, 231, 235, 0.3)'
-                    ],
-                    borderWidth: 0
-                };
+                // Draw 30 blocks (one per day)
+                const blockAngle = (2 * Math.PI) / 30;
+                const gapAngle = blockAngle * 0.1; // Small gap between blocks
+                
+                last30Days.forEach((day, dayIdx) => {
+                    const startAngle = dayIdx * blockAngle - Math.PI / 2; // Start at top
+                    const endAngle = startAngle + blockAngle - gapAngle;
+                    
+                    // Determine color based on completion
+                    let color;
+                    if (day.data[goalIndex]) {
+                        color = `hsla(${270 + ringIdx * 15}, 60%, 70%, 0.9)`; // Done - purple shades
+                    } else if (data[day.date]) {
+                        color = '#ffccd5'; // Not done - pink
+                    } else {
+                        color = '#e5e7eb'; // Not tracked - gray
+                    }
+                    
+                    // Draw the block
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, outerRadius, startAngle, endAngle);
+                    ctx.arc(centerX, centerY, innerRadius, endAngle, startAngle, true);
+                    ctx.closePath();
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                });
             });
             
-            multiRingChartInstance = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Completed', 'Not Completed'],
-                    datasets: datasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    cutout: '30%',
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'bottom',
-                            labels: {
-                                font: {
-                                    family: "'Helvetica Neue', Helvetica, Arial, sans-serif",
-                                    size: 10
-                                },
-                                color: '#4a3f5c',
-                                padding: 8,
-                                usePointStyle: true,
-                                generateLabels: function(chart) {
-                                    return selectedGoals.map((goalIndex, idx) => ({
-                                        text: goals[goalIndex],
-                                        fillStyle: `hsla(${270 + idx * 15}, 60%, 70%, 0.8)`,
-                                        hidden: false,
-                                        index: idx
-                                    }));
-                                }
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const goalIndex = selectedGoals[context.datasetIndex];
-                                    const percentage = context.parsed;
-                                    if (context.dataIndex === 0) {
-                                        return `${goals[goalIndex]}: ${Math.round(percentage)}% completed`;
-                                    }
-                                    return null;
-                                }
-                            }
-                        }
-                    }
-                }
+            // Draw center circle with legend
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, selectedGoals.length > 0 ? maxRadius - (numRings * ringWidth) : 30, 0, 2 * Math.PI);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+            
+            // Add text in center
+            ctx.font = 'bold 16px Helvetica Neue, Helvetica, Arial, sans-serif';
+            ctx.fillStyle = '#d4a5f9';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('30 Days', centerX, centerY - 10);
+            
+            ctx.font = '12px Helvetica Neue, Helvetica, Arial, sans-serif';
+            ctx.fillStyle = '#8a7d9b';
+            ctx.fillText('per ring', centerX, centerY + 10);
+            
+            // Draw legend below
+            const legendY = canvas.height - 80;
+            const legendStartX = 20;
+            
+            selectedGoals.forEach((goalIndex, idx) => {
+                const y = legendY + (idx * 16);
+                
+                // Color box
+                ctx.fillStyle = `hsla(${270 + idx * 15}, 60%, 70%, 0.9)`;
+                ctx.fillRect(legendStartX, y, 12, 12);
+                
+                // Goal name
+                ctx.font = '11px Helvetica Neue, Helvetica, Arial, sans-serif';
+                ctx.fillStyle = '#4a3f5c';
+                ctx.textAlign = 'left';
+                ctx.fillText(goals[goalIndex], legendStartX + 18, y + 9);
             });
         }
         
@@ -1204,6 +1227,9 @@
             
             const overallPercentage = totalPossible > 0 ? (totalCompleted / totalPossible) * 100 : 0;
             const remaining = 100 - overallPercentage;
+            
+            // Calculate "X out of 10" metric
+            const outOf10 = Math.round((overallPercentage / 100) * 10);
             
             // Determine color based on percentage
             let mainColor;
@@ -1247,11 +1273,15 @@
                         ctx.fillStyle = '#d4a5f9';
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
-                        ctx.fillText(Math.round(overallPercentage) + '%', centerX, centerY - 10);
+                        ctx.fillText(Math.round(overallPercentage) + '%', centerX, centerY - 20);
                         
                         ctx.font = '14px Helvetica Neue, Helvetica, Arial, sans-serif';
                         ctx.fillStyle = '#8a7d9b';
-                        ctx.fillText('Consistent', centerX, centerY + 20);
+                        ctx.fillText('Consistent', centerX, centerY + 5);
+                        
+                        ctx.font = 'bold 13px Helvetica Neue, Helvetica, Arial, sans-serif';
+                        ctx.fillStyle = '#d4a5f9';
+                        ctx.fillText(`${outOf10} out of 10 times`, centerX, centerY + 25);
                         ctx.restore();
                     }
                 }]
@@ -1687,4 +1717,3 @@
     </script>
 </body>
 </html>
-
