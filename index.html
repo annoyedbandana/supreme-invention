@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>My Life Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        :root {
+            --bg: #f8f4ff;
+            --surface: #ffffff;
+            --surface-hover: #f0ebff;
+            --accent: #c8a2d0;
+            --accent-dim: #b894c4;
+            --text: #4a3f5c;
+            --text-dim: #8a7d9b;
+            --red: #ff6b9d;
+            --orange: #ffb4d1;
+            --lavender: #e0c9f5;
+            --pastel-pink: #ffc8dd;
+            --lilac: #d4a5f9;
+        }
+        
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 2px solid var(--lavender);
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: clamp(1.8rem, 5vw, 2.5rem);
+            letter-spacing: -1px;
+            margin-bottom: 10px;
+            color: var(--lilac);
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+        
+        .view-switcher {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            background: var(--surface);
+            padding: 6px;
+            border-radius: 12px;
+        }
+        
+        .view-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-dim);
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+        
+        .view-btn.active {
+            background: var(--lilac);
+            color: white;
+        }
+        
+        .section {
+            display: none;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        /* Today View */
+        .date-display {
+            text-align: center;
+            font-size: 1.1rem;
+            color: var(--text-dim);
+            margin-bottom: 30px;
+            font-weight: 500;
+        }
+        
+        .goals-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .goal-item {
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .goal-item.completed {
+            border-color: var(--lilac);
+            background: linear-gradient(135deg, rgba(212, 165, 249, 0.2), rgba(255, 200, 221, 0.2));
+        }
+        
+        .goal-info {
+            flex: 1;
+        }
+        
+        .goal-name {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        
+        .streak-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+        }
+        
+        .fire {
+            font-size: 1.2rem;
+        }
+        
+        .toggle-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            border: 3px solid var(--text-dim);
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        
+        .toggle-btn.active {
+            background: var(--lilac);
+            border-color: var(--lilac);
+            transform: scale(1.05);
+        }
+        
+        /* Stats View */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 2.5rem;
+            color: var(--lilac);
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+        
+        .stat-label {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .goal-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .goal-stat-item {
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 16px;
+        }
+        
+        .goal-stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .goal-stat-name {
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--lilac), var(--pastel-pink));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .mini-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 0.85rem;
+            color: var(--text-dim);
+        }
+        
+        /* Settings View */
+        .settings-section {
+            margin-bottom: 30px;
+        }
+        
+        .settings-section h3 {
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            margin-bottom: 15px;
+        }
+        
+        .goal-settings {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .goal-setting-item {
+            background: var(--surface);
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .goal-setting-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .goal-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 1rem;
+            outline: none;
+        }
+        
+        .start-date-input {
+            padding: 8px;
+            border: 1px solid var(--lavender);
+            border-radius: 6px;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 0.85rem;
+            color: var(--text);
+            background: white;
+        }
+        
+        .start-date-label {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+        }
+        
+        .goal-input::placeholder {
+            color: var(--text-dim);
+        }
+        
+        .delete-btn {
+            background: var(--red);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+        
+        .delete-btn:hover {
+            opacity: 0.8;
+        }
+        
+        .add-goal-btn {
+            background: var(--lilac);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-weight: 500;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+        
+        .add-goal-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .danger-zone {
+            border: 2px solid var(--red);
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 30px;
+        }
+        
+        .danger-zone h3 {
+            color: var(--red);
+        }
+        
+        .danger-btn {
+            background: var(--red);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        /* History View */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-top: 20px;
+        }
+        
+        .calendar-day {
+            aspect-ratio: 1;
+            background: var(--surface);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .calendar-day.success {
+            background: var(--lilac);
+            color: white;
+        }
+        
+        .calendar-day.partial {
+            background: var(--pastel-pink);
+            color: white;
+        }
+        
+        .calendar-day.fail {
+            background: rgba(255,71,87,0.3);
+        }
+        
+        .calendar-day.today {
+            border: 2px solid var(--lilac);
+        }
+        
+        /* Date Picker for editing past entries */
+        .date-picker-section {
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .date-picker-section h3 {
+            font-size: 1rem;
+            margin-bottom: 15px;
+            color: var(--text);
+        }
+        
+        .date-navigation {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .nav-arrow {
+            background: var(--lilac);
+            color: white;
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+        
+        .nav-arrow:active {
+            transform: scale(0.95);
+            opacity: 0.8;
+        }
+        
+        .date-input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid var(--lavender);
+            border-radius: 8px;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 1rem;
+            color: var(--text);
+            background: white;
+        }
+        
+        /* Charts section */
+        .charts-container {
+            margin-top: 30px;
+        }
+        
+        .chart-box {
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .chart-box h3 {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: var(--text);
+        }
+        
+        canvas {
+            max-height: 300px;
+        }
+        
+        /* Individual goal heatmaps */
+        .goal-heatmap {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(12px, 12px));
+            gap: 3px;
+            margin: 15px 0;
+            max-width: 100%;
+        }
+        
+        .heatmap-cell {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        .heatmap-cell:hover {
+            transform: scale(1.3);
+            z-index: 10;
+        }
+        
+        .heatmap-cell.empty {
+            background: #e5e7eb;
+        }
+        
+        .heatmap-cell.done {
+            background: var(--lilac);
+        }
+        
+        .heatmap-cell.not-done {
+            background: #ffccd5;
+        }
+        
+        .heatmap-cell.future {
+            background: #f0f0f0;
+            border: 1px dashed #d0d0d0;
+        }
+        
+        .heatmap-legend {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+        
+        .heatmap-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .heatmap-legend-box {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 20px;
+            font-size: 0.85rem;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-box {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>My Life Dashboard</h1>
+        </header>
+        
+        <div class="view-switcher">
+            <button class="view-btn active" onclick="switchView('today')">Today</button>
+            <button class="view-btn" onclick="switchView('stats')">Stats</button>
+            <button class="view-btn" onclick="switchView('history')">History</button>
+            <button class="view-btn" onclick="switchView('settings')">Settings</button>
+        </div>
+        
+        <!-- TODAY VIEW -->
+        <div id="todayView" class="section active">
+            <div class="date-picker-section">
+                <h3>📅 Select Date to Track</h3>
+                <div class="date-navigation">
+                    <button class="nav-arrow" onclick="navigateDate(-1)">←</button>
+                    <input type="date" id="dateInput" class="date-input" onchange="changeDate(this.value)">
+                    <button class="nav-arrow" onclick="navigateDate(1)">→</button>
+                </div>
+            </div>
+            <div class="date-display" id="dateDisplay"></div>
+            <div class="goals-list" id="goalsList"></div>
+        </div>
+        
+        <!-- STATS VIEW -->
+        <div id="statsView" class="section">
+            <div class="stats-grid" id="overallStats"></div>
+            
+            <div class="charts-container">
+                <div class="chart-box">
+                    <h3>🌊 Consistency Heatwave</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 15px;">Last 30 days - darker = more goals completed</p>
+                    <canvas id="heatwaveChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="goal-stats" id="goalStats"></div>
+        </div>
+        
+        <!-- HISTORY VIEW -->
+        <div id="historyView" class="section">
+            <h2 style="margin-bottom: 20px;">Last 30 Days</h2>
+            <div class="calendar-grid" id="calendarGrid"></div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-box" style="background: var(--accent);"></div>
+                    <span>All goals</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box" style="background: var(--orange);"></div>
+                    <span>Some goals</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box" style="background: rgba(255,71,87,0.3);"></div>
+                    <span>No goals</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SETTINGS VIEW -->
+        <div id="settingsView" class="section">
+            <div class="settings-section">
+                <h3>Your Goals</h3>
+                <div class="goal-settings" id="goalSettings"></div>
+                <button class="add-goal-btn" onclick="addGoal()">+ Add New Goal</button>
+            </div>
+            
+            <div class="settings-section" style="margin-top: 30px;">
+                <h3>📦 Backup & Restore</h3>
+                <p style="color: var(--text-dim); margin: 10px 0; font-size: 0.9rem;">Save your data to a file or load from a previous backup</p>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="add-goal-btn" style="flex: 1; min-width: 140px;" onclick="exportData()">💾 Export Data</button>
+                    <button class="add-goal-btn" style="flex: 1; min-width: 140px; background: var(--pastel-pink);" onclick="document.getElementById('importFile').click()">📂 Import Data</button>
+                </div>
+                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(event)">
+            </div>
+            
+            <div class="danger-zone">
+                <h3>⚠️ Danger Zone</h3>
+                <p style="color: var(--text-dim); margin: 10px 0;">This will delete all your data and cannot be undone.</p>
+                <button class="danger-btn" onclick="resetAll()">Reset Everything</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data structure
+        let goals = JSON.parse(localStorage.getItem('goals')) || [
+            'Exercise 30min',
+            'Read 20 pages',
+            'Meditate 10min',
+            'No phone before bed',
+            'Drink 8 glasses water'
+        ];
+        
+        let data = JSON.parse(localStorage.getItem('trackerData')) || {};
+        
+        // Goal metadata (start dates, notes, etc.)
+        let goalMetadata = JSON.parse(localStorage.getItem('goalMetadata')) || {};
+        
+        // Current date being viewed/edited (defaults to today)
+        let currentDateKey = getTodayKey();
+        
+        // Save to localStorage
+        function saveData() {
+            localStorage.setItem('goals', JSON.stringify(goals));
+            localStorage.setItem('trackerData', JSON.stringify(data));
+            localStorage.setItem('goalMetadata', JSON.stringify(goalMetadata));
+        }
+        
+        // Get today's date key
+        function getTodayKey() {
+            return new Date().toISOString().split('T')[0];
+        }
+        
+        // Change the date being viewed
+        function changeDate(dateString) {
+            currentDateKey = dateString;
+            initDate(currentDateKey);
+            renderToday();
+        }
+        
+        // Navigate forward or backward by days
+        function navigateDate(days) {
+            const current = new Date(currentDateKey);
+            current.setDate(current.getDate() + days);
+            currentDateKey = current.toISOString().split('T')[0];
+            document.getElementById('dateInput').value = currentDateKey;
+            initDate(currentDateKey);
+            renderToday();
+        }
+        
+        // Initialize data for a specific date if needed
+        function initDate(dateKey) {
+            if (!data[dateKey]) {
+                data[dateKey] = goals.map(() => false);
+                saveData();
+            }
+        }
+        
+        // Initialize today's data if needed (backward compatibility)
+        function initToday() {
+            initDate(getTodayKey());
+        }
+        
+        // Switch views
+        function switchView(view) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(view + 'View').classList.add('active');
+            event.target.classList.add('active');
+            
+            if (view === 'today') renderToday();
+            if (view === 'stats') renderStats();
+            if (view === 'history') renderHistory();
+            if (view === 'settings') renderSettings();
+        }
+        
+        // Toggle goal completion
+        function toggleGoal(index) {
+            initDate(currentDateKey);
+            data[currentDateKey][index] = !data[currentDateKey][index];
+            saveData();
+            renderToday();
+        }
+        
+        // Calculate streak
+        function calculateStreak(goalIndex) {
+            const today = getTodayKey();
+            const allDates = Object.keys(data).sort();
+            
+            // Find today's position in the sorted dates
+            const todayIndex = allDates.indexOf(today);
+            if (todayIndex === -1) return 0; // Today not in data
+            
+            // Check if today's goal is completed
+            if (!data[today][goalIndex]) return 0;
+            
+            let streak = 0;
+            
+            // Go backwards from today
+            for (let i = todayIndex; i >= 0; i--) {
+                const currentDate = allDates[i];
+                
+                // Check if this is the next consecutive day
+                if (i < todayIndex) {
+                    const prevDate = allDates[i];
+                    const nextDate = allDates[i + 1];
+                    
+                    // Calculate days between
+                    const prev = new Date(prevDate);
+                    const next = new Date(nextDate);
+                    const daysDiff = Math.round((next - prev) / (1000 * 60 * 60 * 24));
+                    
+                    // If more than 1 day gap, break streak
+                    if (daysDiff > 1) break;
+                }
+                
+                // Check if goal was completed
+                if (data[currentDate][goalIndex]) {
+                    streak++;
+                } else {
+                    break; // Streak broken
+                }
+            }
+            
+            return streak;
+        }
+        
+        // Calculate best streak
+        function calculateBestStreak(goalIndex) {
+            const dates = Object.keys(data).sort();
+            if (dates.length === 0) return 0;
+            
+            let bestStreak = 0;
+            let currentStreak = 0;
+            
+            for (let i = 0; i < dates.length; i++) {
+                const currentDate = dates[i];
+                
+                if (data[currentDate][goalIndex]) {
+                    // Check if this is consecutive with previous date
+                    if (i > 0) {
+                        const prevDate = dates[i - 1];
+                        const prev = new Date(prevDate);
+                        const curr = new Date(currentDate);
+                        const daysDiff = Math.round((curr - prev) / (1000 * 60 * 60 * 24));
+                        
+                        if (daysDiff === 1) {
+                            // Consecutive day
+                            currentStreak++;
+                        } else {
+                            // Gap in days, start new streak
+                            currentStreak = 1;
+                        }
+                    } else {
+                        // First date
+                        currentStreak = 1;
+                    }
+                    
+                    bestStreak = Math.max(bestStreak, currentStreak);
+                } else {
+                    // Goal not completed, reset streak
+                    currentStreak = 0;
+                }
+            }
+            
+            return bestStreak;
+        }
+        
+        // Calculate success rate
+        function calculateSuccessRate(goalIndex) {
+            const dates = Object.keys(data);
+            if (dates.length === 0) return 0;
+            
+            const completed = dates.filter(date => data[date][goalIndex]).length;
+            return Math.round((completed / dates.length) * 100);
+        }
+        
+        // Render Today view
+        function renderToday() {
+            initDate(currentDateKey);
+            const dateObj = new Date(currentDateKey + 'T00:00:00');
+            
+            // Set the date picker value
+            document.getElementById('dateInput').value = currentDateKey;
+            
+            // Display formatted date
+            document.getElementById('dateDisplay').textContent = 
+                dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            
+            const goalsList = document.getElementById('goalsList');
+            goalsList.innerHTML = '';
+            
+            goals.forEach((goal, index) => {
+                const streak = calculateStreak(index);
+                const completed = data[currentDateKey][index];
+                
+                const goalItem = document.createElement('div');
+                goalItem.className = 'goal-item' + (completed ? ' completed' : '');
+                goalItem.innerHTML = `
+                    <div class="goal-info">
+                        <div class="goal-name">${goal}</div>
+                        <div class="streak-info">
+                            <span class="fire">${streak > 0 ? '🔥' : '💤'}</span>
+                            <span>${streak} day streak</span>
+                        </div>
+                    </div>
+                    <button class="toggle-btn ${completed ? 'active' : ''}" onclick="toggleGoal(${index})">
+                        ${completed ? '✓' : ''}
+                    </button>
+                `;
+                goalsList.appendChild(goalItem);
+            });
+        }
+        
+        // Render Stats view
+        function renderStats() {
+            const dates = Object.keys(data);
+            const totalDays = dates.length;
+            const today = getTodayKey();
+            const todayCompleted = data[today] ? data[today].filter(v => v).length : 0;
+            
+            let totalStreaks = 0;
+            goals.forEach((_, i) => totalStreaks += calculateStreak(i));
+            
+            document.getElementById('overallStats').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${totalDays}</div>
+                    <div class="stat-label">Days Tracked</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${todayCompleted}/${goals.length}</div>
+                    <div class="stat-label">Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${totalStreaks}</div>
+                    <div class="stat-label">Active Streaks</div>
+                </div>
+            `;
+            
+            // Render the single creative chart
+            renderHeatwaveChart();
+            
+            const goalStats = document.getElementById('goalStats');
+            goalStats.innerHTML = '';
+            
+            goals.forEach((goal, index) => {
+                const streak = calculateStreak(index);
+                const bestStreak = calculateBestStreak(index);
+                const successRate = calculateSuccessRate(index);
+                const totalCompleted = Object.keys(data).filter(date => data[date][index]).length;
+                const startDate = goalMetadata[index]?.startDate;
+                const endDate = goalMetadata[index]?.endDate;
+                
+                let dateInfo = '';
+                if (startDate) {
+                    const start = new Date(startDate);
+                    const now = new Date();
+                    const days = Math.floor((now - start) / (1000 * 60 * 60 * 24));
+                    dateInfo = `Started ${days} days ago`;
+                    
+                    if (endDate) {
+                        const end = new Date(endDate);
+                        const daysUntilEnd = Math.floor((end - now) / (1000 * 60 * 60 * 24));
+                        if (daysUntilEnd > 0) {
+                            dateInfo += ` • ${daysUntilEnd} days left`;
+                        } else if (daysUntilEnd === 0) {
+                            dateInfo += ` • Ends today!`;
+                        } else {
+                            dateInfo += ` • Ended ${Math.abs(daysUntilEnd)} days ago`;
+                        }
+                    }
+                } else if (endDate) {
+                    const end = new Date(endDate);
+                    const now = new Date();
+                    const daysUntilEnd = Math.floor((end - now) / (1000 * 60 * 60 * 24));
+                    if (daysUntilEnd > 0) {
+                        dateInfo = `${daysUntilEnd} days left`;
+                    } else if (daysUntilEnd === 0) {
+                        dateInfo = `Ends today!`;
+                    } else {
+                        dateInfo = `Ended ${Math.abs(daysUntilEnd)} days ago`;
+                    }
+                }
+                
+                const statItem = document.createElement('div');
+                statItem.className = 'goal-stat-item';
+                statItem.innerHTML = `
+                    <div class="goal-stat-header">
+                        <div class="goal-stat-name">${goal}</div>
+                        <div style="color: var(--lilac); font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 700;">${successRate}%</div>
+                    </div>
+                    <div class="goal-heatmap" id="heatmap-${index}"></div>
+                    <div class="mini-stats">
+                        <span>🔥 ${streak} days</span>
+                        <span>🏆 Best: ${bestStreak}</span>
+                        <span>✓ ${totalCompleted} total</span>
+                        ${dateInfo ? `<span style="font-size: 0.8em;">📅 ${dateInfo}</span>` : ''}
+                    </div>
+                `;
+                goalStats.appendChild(statItem);
+                
+                // Render heatmap for this goal
+                renderGoalHeatmap(index);
+            });
+            
+            // Add legend after all goals
+            const legend = document.createElement('div');
+            legend.className = 'heatmap-legend';
+            legend.innerHTML = `
+                <div class="heatmap-legend-item">
+                    <div class="heatmap-legend-box" style="background: var(--lilac);"></div>
+                    <span>Done</span>
+                </div>
+                <div class="heatmap-legend-item">
+                    <div class="heatmap-legend-box" style="background: #ffccd5;"></div>
+                    <span>Not done</span>
+                </div>
+                <div class="heatmap-legend-item">
+                    <div class="heatmap-legend-box" style="background: #e5e7eb;"></div>
+                    <span>Not tracked</span>
+                </div>
+            `;
+            goalStats.appendChild(legend);
+        }
+        
+        // Render heatmap for individual goal (last 90 days)
+        function renderGoalHeatmap(goalIndex) {
+            const container = document.getElementById(`heatmap-${goalIndex}`);
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            // Get last 90 days
+            const today = new Date();
+            const daysToShow = 90;
+            
+            for (let i = daysToShow - 1; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const dateKey = date.toISOString().split('T')[0];
+                
+                const cell = document.createElement('div');
+                cell.className = 'heatmap-cell';
+                cell.title = date.toLocaleDateString('en-US', { 
+                    weekday: 'short', 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+                
+                if (data[dateKey] && data[dateKey][goalIndex] !== undefined) {
+                    // Data exists for this date
+                    if (data[dateKey][goalIndex]) {
+                        cell.classList.add('done');
+                        cell.title += ' ✓ Completed';
+                    } else {
+                        cell.classList.add('not-done');
+                        cell.title += ' ✗ Not done';
+                    }
+                } else {
+                    // No data tracked for this date
+                    cell.classList.add('empty');
+                    cell.title += ' (Not tracked)';
+                }
+                
+                container.appendChild(cell);
+            }
+        }
+        
+        // Global chart instance
+        let heatwaveChartInstance = null;
+        
+        // Render consistency heatwave chart - shows daily completion rate
+        function renderHeatwaveChart() {
+            const canvas = document.getElementById('heatwaveChart');
+            const ctx = canvas.getContext('2d');
+            
+            if (heatwaveChartInstance) {
+                heatwaveChartInstance.destroy();
+            }
+            
+            // Get last 30 days
+            const last30Days = [];
+            for (let i = 29; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const dateKey = date.toISOString().split('T')[0];
+                const dayData = data[dateKey] || [];
+                
+                // Calculate completion percentage for this day
+                const completed = dayData.filter(v => v).length;
+                const percentage = goals.length > 0 ? (completed / goals.length) * 100 : 0;
+                
+                last30Days.push({
+                    date: dateKey,
+                    label: date.getDate(),
+                    percentage: percentage,
+                    completed: completed,
+                    total: goals.length
+                });
+            }
+            
+            // Create gradient colors based on completion
+            const colors = last30Days.map(day => {
+                if (day.percentage === 0) return 'rgba(239, 68, 68, 0.4)';
+                if (day.percentage < 50) return 'rgba(251, 191, 36, 0.6)';
+                if (day.percentage < 100) return 'rgba(168, 85, 247, 0.7)';
+                return 'rgba(212, 165, 249, 1)';
+            });
+            
+            heatwaveChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: last30Days.map(d => d.label),
+                    datasets: [{
+                        label: 'Daily Completion %',
+                        data: last30Days.map(d => d.percentage),
+                        backgroundColor: colors,
+                        borderColor: colors.map(c => c.replace('0.4', '1').replace('0.6', '1').replace('0.7', '1')),
+                        borderWidth: 2,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) {
+                                    const index = context[0].dataIndex;
+                                    return new Date(last30Days[index].date).toLocaleDateString('en-US', { 
+                                        weekday: 'short', 
+                                        month: 'short', 
+                                        day: 'numeric' 
+                                    });
+                                },
+                                label: function(context) {
+                                    const index = context.dataIndex;
+                                    const day = last30Days[index];
+                                    return `${day.completed}/${day.total} goals (${Math.round(day.percentage)}%)`;
+                                }
+                            },
+                            backgroundColor: 'rgba(74, 63, 92, 0.9)',
+                            titleFont: {
+                                family: "'Helvetica Neue', Helvetica, Arial, sans-serif"
+                            },
+                            bodyFont: {
+                                family: "'Helvetica Neue', Helvetica, Arial, sans-serif"
+                            },
+                            padding: 12,
+                            cornerRadius: 8
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                },
+                                font: {
+                                    family: "'Helvetica Neue', Helvetica, Arial, sans-serif"
+                                },
+                                color: '#8a7d9b'
+                            },
+                            grid: {
+                                color: '#e0c9f5'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: {
+                                    family: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+                                    size: 10
+                                },
+                                color: '#8a7d9b'
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Render History view
+        function renderHistory() {
+            const calendarGrid = document.getElementById('calendarGrid');
+            calendarGrid.innerHTML = '';
+            
+            const today = new Date();
+            for (let i = 29; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const dateKey = date.toISOString().split('T')[0];
+                
+                const dayData = data[dateKey];
+                let className = 'calendar-day';
+                
+                if (dayData) {
+                    const completed = dayData.filter(v => v).length;
+                    if (completed === goals.length) className += ' success';
+                    else if (completed > 0) className += ' partial';
+                    else className += ' fail';
+                }
+                
+                if (i === 0) className += ' today';
+                
+                const dayDiv = document.createElement('div');
+                dayDiv.className = className;
+                dayDiv.textContent = date.getDate();
+                dayDiv.title = date.toLocaleDateString();
+                calendarGrid.appendChild(dayDiv);
+            }
+        }
+        
+        // Render Settings view
+        function renderSettings() {
+            const goalSettings = document.getElementById('goalSettings');
+            goalSettings.innerHTML = '';
+            
+            goals.forEach((goal, index) => {
+                const metadata = goalMetadata[index] || {};
+                const settingItem = document.createElement('div');
+                settingItem.className = 'goal-setting-item';
+                settingItem.innerHTML = `
+                    <div class="goal-setting-row">
+                        <input 
+                            type="text" 
+                            class="goal-input" 
+                            value="${goal}" 
+                            onchange="updateGoal(${index}, this.value)"
+                            placeholder="Goal name"
+                        />
+                        <button class="delete-btn" onclick="deleteGoal(${index})">Delete</button>
+                    </div>
+                    <div class="goal-setting-row">
+                        <span class="start-date-label">Start date:</span>
+                        <input 
+                            type="date" 
+                            class="start-date-input" 
+                            value="${metadata.startDate || ''}"
+                            onchange="updateStartDate(${index}, this.value)"
+                        />
+                    </div>
+                    <div class="goal-setting-row">
+                        <span class="start-date-label">End date:</span>
+                        <input 
+                            type="date" 
+                            class="start-date-input" 
+                            value="${metadata.endDate || ''}"
+                            onchange="updateEndDate(${index}, this.value)"
+                        />
+                    </div>
+                `;
+                goalSettings.appendChild(settingItem);
+            });
+        }
+        
+        // Update goal start date
+        function updateStartDate(index, dateValue) {
+            if (!goalMetadata[index]) {
+                goalMetadata[index] = {};
+            }
+            goalMetadata[index].startDate = dateValue;
+            saveData();
+        }
+        
+        // Update goal end date
+        function updateEndDate(index, dateValue) {
+            if (!goalMetadata[index]) {
+                goalMetadata[index] = {};
+            }
+            goalMetadata[index].endDate = dateValue;
+            saveData();
+        }
+        
+        // Update goal name
+        function updateGoal(index, newName) {
+            goals[index] = newName;
+            saveData();
+        }
+        
+        // Add new goal
+        function addGoal() {
+            const newGoal = prompt('Enter new goal:');
+            if (newGoal) {
+                goals.push(newGoal);
+                // Add false to all existing dates for this goal
+                Object.keys(data).forEach(date => {
+                    data[date].push(false);
+                });
+                saveData();
+                renderSettings();
+            }
+        }
+        
+        // Delete goal
+        function deleteGoal(index) {
+            if (confirm('Delete this goal? This will remove all tracking data for it.')) {
+                goals.splice(index, 1);
+                // Remove from all dates
+                Object.keys(data).forEach(date => {
+                    data[date].splice(index, 1);
+                });
+                saveData();
+                renderSettings();
+            }
+        }
+        
+        // Reset everything
+        function resetAll() {
+            if (confirm('Are you SURE? This will delete EVERYTHING and cannot be undone!')) {
+                if (confirm('Last chance! Really delete all your progress?')) {
+                    localStorage.clear();
+                    location.reload();
+                }
+            }
+        }
+        
+        // Export data to JSON file
+        function exportData() {
+            const exportObj = {
+                goals: goals,
+                data: data,
+                goalMetadata: goalMetadata,
+                exportDate: new Date().toISOString(),
+                version: '1.0'
+            };
+            
+            const dataStr = JSON.stringify(exportObj, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `life-dashboard-backup-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            alert('✅ Data exported successfully! File downloaded to your device.');
+        }
+        
+        // Import data from JSON file
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    // Validate the data structure
+                    if (!importedData.goals || !importedData.data) {
+                        alert('❌ Invalid backup file format.');
+                        return;
+                    }
+                    
+                    // Confirm before overwriting
+                    if (confirm('⚠️ This will replace all current data with the backup. Continue?')) {
+                        goals = importedData.goals;
+                        data = importedData.data;
+                        goalMetadata = importedData.goalMetadata || {};
+                        
+                        saveData();
+                        
+                        alert('✅ Data imported successfully! Refreshing...');
+                        location.reload();
+                    }
+                } catch (error) {
+                    alert('❌ Error reading backup file. Make sure it\'s a valid Life Dashboard backup.');
+                    console.error('Import error:', error);
+                }
+            };
+            reader.readAsText(file);
+            
+            // Reset the file input so the same file can be selected again
+            event.target.value = '';
+        }
+        
+        // Initialize
+        currentDateKey = getTodayKey();
+        document.getElementById('dateInput').value = currentDateKey;
+        renderToday();
+    </script>
+</body>
+</html>
