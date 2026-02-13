@@ -546,6 +546,34 @@
             border-radius: 2px;
         }
         
+        /* Goal filter checkboxes */
+        .goal-filter-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--surface-hover);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .goal-filter-item:hover {
+            background: var(--lavender);
+        }
+        
+        .goal-filter-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .goal-filter-label {
+            font-size: 0.9rem;
+            color: var(--text);
+            cursor: pointer;
+        }
+        
         .legend {
             display: flex;
             gap: 20px;
@@ -610,7 +638,41 @@
         
         <!-- STATS VIEW -->
         <div id="statsView" class="section">
-            <div class="stats-grid" id="overallStats"></div>
+            <!-- Goal Filter for Multi-Ring Chart -->
+            <div style="background: var(--surface); padding: 20px; border-radius: 16px; margin-bottom: 20px;">
+                <h3 style="font-size: 1rem; margin-bottom: 15px; color: var(--text);">Filter Goals (for Multi-Ring Chart)</h3>
+                <div id="goalFilter" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
+            </div>
+            
+            <!-- Three Donut Charts -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                <!-- Option A: Multi-Ring -->
+                <div class="chart-box">
+                    <h3>🎯 Goal Consistency (Last 30 Days)</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px;">Each ring = one goal</p>
+                    <div style="display: flex; justify-content: center; padding: 20px;">
+                        <canvas id="multiRingChart" width="250" height="250"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Option B: Overall Score -->
+                <div class="chart-box">
+                    <h3>📊 Overall Consistency Score</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px;">Your total completion rate</p>
+                    <div style="display: flex; justify-content: center; padding: 20px;">
+                        <canvas id="overallScoreChart" width="250" height="250"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Option C: Goal Balance -->
+                <div class="chart-box">
+                    <h3>⚖️ Goal Balance</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px;">Which habits are strongest?</p>
+                    <div style="display: flex; justify-content: center; padding: 20px;">
+                        <canvas id="goalBalanceChart" width="250" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
             
             <div class="charts-container">
                 <div class="chart-box">
@@ -883,28 +945,13 @@
         
         // Render Stats view
         function renderStats() {
-            const dates = Object.keys(data);
-            const totalDays = dates.length;
-            const today = getTodayKey();
-            const todayCompleted = data[today] ? data[today].filter(v => v).length : 0;
+            // Render goal filter checkboxes
+            renderGoalFilter();
             
-            let totalStreaks = 0;
-            goals.forEach((_, i) => totalStreaks += calculateStreak(i));
-            
-            document.getElementById('overallStats').innerHTML = `
-                <div class="stat-card">
-                    <div class="stat-value">${totalDays}</div>
-                    <div class="stat-label">Days Tracked</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">${todayCompleted}/${goals.length}</div>
-                    <div class="stat-label">Today</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">${totalStreaks}</div>
-                    <div class="stat-label">Active Streaks</div>
-                </div>
-            `;
+            // Render the three donut charts
+            renderMultiRingChart();
+            renderOverallScoreChart();
+            renderGoalBalanceChart();
             
             // Render the single creative chart
             renderHeatwaveChart();
@@ -992,6 +1039,287 @@
             goalStats.appendChild(legend);
         }
         
+        // Track which goals are selected for multi-ring chart
+        let selectedGoals = goals.map((_, idx) => idx); // All selected by default
+        
+        // Render goal filter checkboxes
+        function renderGoalFilter() {
+            const filterContainer = document.getElementById('goalFilter');
+            filterContainer.innerHTML = '';
+            
+            goals.forEach((goal, index) => {
+                const filterItem = document.createElement('div');
+                filterItem.className = 'goal-filter-item';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'goal-filter-checkbox';
+                checkbox.checked = selectedGoals.includes(index);
+                checkbox.id = `filter-${index}`;
+                checkbox.onchange = () => toggleGoalFilter(index);
+                
+                const label = document.createElement('label');
+                label.className = 'goal-filter-label';
+                label.htmlFor = `filter-${index}`;
+                label.textContent = goal;
+                
+                filterItem.appendChild(checkbox);
+                filterItem.appendChild(label);
+                filterContainer.appendChild(filterItem);
+            });
+        }
+        
+        // Toggle goal in filter
+        function toggleGoalFilter(index) {
+            if (selectedGoals.includes(index)) {
+                selectedGoals = selectedGoals.filter(i => i !== index);
+            } else {
+                selectedGoals.push(index);
+                selectedGoals.sort((a, b) => a - b);
+            }
+            renderMultiRingChart(); // Re-render the multi-ring chart
+        }
+        
+        // Global chart instances
+        let multiRingChartInstance = null;
+        let overallScoreChartInstance = null;
+        let goalBalanceChartInstance = null;
+        let heatwaveChartInstance = null;
+        
+        // Calculate data for last 30 days
+        function getLast30DaysData() {
+            const last30Days = [];
+            const today = new Date();
+            
+            for (let i = 29; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const dateKey = date.toISOString().split('T')[0];
+                last30Days.push({
+                    date: dateKey,
+                    data: data[dateKey] || goals.map(() => false)
+                });
+            }
+            
+            return last30Days;
+        }
+        
+        // Option A: Multi-Ring Donut Chart
+        function renderMultiRingChart() {
+            const canvas = document.getElementById('multiRingChart');
+            const ctx = canvas.getContext('2d');
+            
+            if (multiRingChartInstance) {
+                multiRingChartInstance.destroy();
+            }
+            
+            const last30Days = getLast30DaysData();
+            
+            // Calculate completion percentage for each selected goal
+            const datasets = selectedGoals.map((goalIndex, idx) => {
+                const completed = last30Days.filter(day => day.data[goalIndex]).length;
+                const percentage = (completed / 30) * 100;
+                
+                return {
+                    label: goals[goalIndex],
+                    data: [percentage, 100 - percentage],
+                    backgroundColor: [
+                        `hsla(${270 + idx * 15}, 60%, 70%, 0.8)`,
+                        'rgba(229, 231, 235, 0.3)'
+                    ],
+                    borderWidth: 0
+                };
+            });
+            
+            multiRingChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Completed', 'Not Completed'],
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    cutout: '30%',
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: {
+                                font: {
+                                    family: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+                                    size: 10
+                                },
+                                color: '#4a3f5c',
+                                padding: 8,
+                                usePointStyle: true,
+                                generateLabels: function(chart) {
+                                    return selectedGoals.map((goalIndex, idx) => ({
+                                        text: goals[goalIndex],
+                                        fillStyle: `hsla(${270 + idx * 15}, 60%, 70%, 0.8)`,
+                                        hidden: false,
+                                        index: idx
+                                    }));
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const goalIndex = selectedGoals[context.datasetIndex];
+                                    const percentage = context.parsed;
+                                    if (context.dataIndex === 0) {
+                                        return `${goals[goalIndex]}: ${Math.round(percentage)}% completed`;
+                                    }
+                                    return null;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Option B: Overall Consistency Score
+        function renderOverallScoreChart() {
+            const canvas = document.getElementById('overallScoreChart');
+            const ctx = canvas.getContext('2d');
+            
+            if (overallScoreChartInstance) {
+                overallScoreChartInstance.destroy();
+            }
+            
+            const last30Days = getLast30DaysData();
+            
+            // Calculate overall completion rate
+            let totalPossible = 0;
+            let totalCompleted = 0;
+            
+            last30Days.forEach(day => {
+                day.data.forEach(completed => {
+                    totalPossible++;
+                    if (completed) totalCompleted++;
+                });
+            });
+            
+            const overallPercentage = totalPossible > 0 ? (totalCompleted / totalPossible) * 100 : 0;
+            const remaining = 100 - overallPercentage;
+            
+            // Determine color based on percentage
+            let mainColor;
+            if (overallPercentage >= 90) mainColor = 'rgba(74, 222, 128, 0.8)'; // Green
+            else if (overallPercentage >= 70) mainColor = 'rgba(212, 165, 249, 0.8)'; // Purple
+            else if (overallPercentage >= 50) mainColor = 'rgba(255, 200, 221, 0.8)'; // Pink
+            else mainColor = 'rgba(255, 153, 153, 0.8)'; // Light red
+            
+            overallScoreChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Completed', 'Remaining'],
+                    datasets: [{
+                        data: [overallPercentage, remaining],
+                        backgroundColor: [mainColor, 'rgba(229, 231, 235, 0.3)'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: false
+                        }
+                    }
+                },
+                plugins: [{
+                    id: 'centerText',
+                    afterDraw: function(chart) {
+                        const ctx = chart.ctx;
+                        const centerX = chart.chartArea.left + (chart.chartArea.right - chart.chartArea.left) / 2;
+                        const centerY = chart.chartArea.top + (chart.chartArea.bottom - chart.chartArea.top) / 2;
+                        
+                        ctx.save();
+                        ctx.font = 'bold 36px Helvetica Neue, Helvetica, Arial, sans-serif';
+                        ctx.fillStyle = '#d4a5f9';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(Math.round(overallPercentage) + '%', centerX, centerY - 10);
+                        
+                        ctx.font = '14px Helvetica Neue, Helvetica, Arial, sans-serif';
+                        ctx.fillStyle = '#8a7d9b';
+                        ctx.fillText('Consistent', centerX, centerY + 20);
+                        ctx.restore();
+                    }
+                }]
+            });
+        }
+        
+        // Option C: Goal Balance Pie Chart
+        function renderGoalBalanceChart() {
+            const canvas = document.getElementById('goalBalanceChart');
+            const ctx = canvas.getContext('2d');
+            
+            if (goalBalanceChartInstance) {
+                goalBalanceChartInstance.destroy();
+            }
+            
+            const last30Days = getLast30DaysData();
+            
+            // Calculate completion percentage for each goal
+            const goalPercentages = goals.map((goal, index) => {
+                const completed = last30Days.filter(day => day.data[index]).length;
+                return (completed / 30) * 100;
+            });
+            
+            // Generate colors for each goal
+            const colors = goals.map((_, idx) => `hsla(${270 + idx * 15}, 60%, 70%, 0.8)`);
+            
+            goalBalanceChartInstance = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: goals,
+                    datasets: [{
+                        data: goalPercentages,
+                        backgroundColor: colors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: {
+                                font: {
+                                    family: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+                                    size: 10
+                                },
+                                color: '#4a3f5c',
+                                padding: 8,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = Math.round(context.parsed);
+                                    return `${label}: ${value}% completion`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
         // Render heatmap for individual goal (last 90 days)
         function renderGoalHeatmap(goalIndex) {
             const container = document.getElementById(`heatmap-${goalIndex}`);
@@ -1034,9 +1362,6 @@
                 container.appendChild(cell);
             }
         }
-        
-        // Global chart instance
-        let heatwaveChartInstance = null;
         
         // Render consistency heatwave chart - shows daily completion rate
         function renderHeatwaveChart() {
@@ -1362,3 +1687,4 @@
     </script>
 </body>
 </html>
+
