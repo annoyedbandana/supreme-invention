@@ -279,6 +279,18 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
+            cursor: move;
+            transition: all 0.3s;
+        }
+        
+        .goal-setting-item:hover {
+            background: var(--surface-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .goal-setting-item.dragging {
+            opacity: 0.5;
         }
         
         .goal-setting-row {
@@ -575,6 +587,58 @@
             cursor: pointer;
         }
         
+        /* Theme selector */
+        .theme-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .theme-option {
+            padding: 15px;
+            border-radius: 12px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .theme-option:hover {
+            transform: scale(1.05);
+        }
+        
+        .theme-option.active {
+            border: 2px solid #4a3f5c;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        /* Glitter effect */
+        @keyframes glitter {
+            0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+            50% { opacity: 1; transform: scale(1) rotate(180deg); }
+        }
+        
+        .glitter {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+        }
+        
+        .glitter::before {
+            content: '✨';
+            font-size: 20px;
+            animation: glitter 1.5s ease-in-out;
+        }
+        
+        /* Glitter on goal completion */
+        .goal-item.completed {
+            position: relative;
+            overflow: visible;
+        }
+        
         .legend {
             display: flex;
             gap: 20px;
@@ -708,7 +772,14 @@
         <!-- SETTINGS VIEW -->
         <div id="settingsView" class="section">
             <div class="settings-section">
+                <h3>🎨 Color Theme</h3>
+                <p style="color: var(--text-dim); margin: 10px 0; font-size: 0.9rem;">Choose your vibe</p>
+                <div class="theme-selector" id="themeSelector"></div>
+            </div>
+            
+            <div class="settings-section" style="margin-top: 30px;">
                 <h3>Your Goals</h3>
+                <p style="color: var(--text-dim); margin: 10px 0; font-size: 0.85rem;">💡 Drag to reorder</p>
                 <div class="goal-settings" id="goalSettings"></div>
                 <button class="add-goal-btn" onclick="addGoal()">+ Add New Goal</button>
             </div>
@@ -746,6 +817,115 @@
         // Goal metadata (start dates, notes, etc.)
         let goalMetadata = JSON.parse(localStorage.getItem('goalMetadata')) || {};
         
+        // Current theme
+        let currentTheme = localStorage.getItem('currentTheme') || 'lavender';
+        
+        // Available themes
+        const themes = {
+            lavender: {
+                name: '💜 Lavender Dreams',
+                colors: {
+                    '--bg': '#f8f4ff',
+                    '--surface': '#ffffff',
+                    '--surface-hover': '#f0ebff',
+                    '--accent': '#c8a2d0',
+                    '--accent-dim': '#b894c4',
+                    '--text': '#4a3f5c',
+                    '--text-dim': '#8a7d9b',
+                    '--red': '#ff6b9d',
+                    '--orange': '#ffb4d1',
+                    '--lavender': '#e0c9f5',
+                    '--pastel-pink': '#ffc8dd',
+                    '--lilac': '#d4a5f9'
+                }
+            },
+            sunset: {
+                name: '🌅 Sunset Vibes',
+                colors: {
+                    '--bg': '#fff5f0',
+                    '--surface': '#ffffff',
+                    '--surface-hover': '#ffe8dd',
+                    '--accent': '#ff9a76',
+                    '--accent-dim': '#ff8566',
+                    '--text': '#5c3a2e',
+                    '--text-dim': '#9b7d6f',
+                    '--red': '#ff6b6b',
+                    '--orange': '#ffa07a',
+                    '--lavender': '#ffd4b8',
+                    '--pastel-pink': '#ffb8a8',
+                    '--lilac': '#ff9a76'
+                }
+            },
+            ocean: {
+                name: '🌊 Ocean Breeze',
+                colors: {
+                    '--bg': '#f0f8ff',
+                    '--surface': '#ffffff',
+                    '--surface-hover': '#e0f2ff',
+                    '--accent': '#4a9eff',
+                    '--accent-dim': '#3d8fe6',
+                    '--text': '#2d4a5c',
+                    '--text-dim': '#6b8a9b',
+                    '--red': '#ff7b9d',
+                    '--orange': '#89c4ff',
+                    '--lavender': '#b8d8ff',
+                    '--pastel-pink': '#c8e0ff',
+                    '--lilac': '#6bb6ff'
+                }
+            },
+            forest: {
+                name: '🌲 Forest Calm',
+                colors: {
+                    '--bg': '#f4f9f4',
+                    '--surface': '#ffffff',
+                    '--surface-hover': '#e8f5e8',
+                    '--accent': '#6bba70',
+                    '--accent-dim': '#5ba860',
+                    '--text': '#2d4a2d',
+                    '--text-dim': '#6b8a6b',
+                    '--red': '#ff8b8b',
+                    '--orange': '#a8d5a8',
+                    '--lavender': '#c8e6c8',
+                    '--pastel-pink': '#d8f0d8',
+                    '--lilac': '#7cc97f'
+                }
+            },
+            midnight: {
+                name: '🌙 Midnight Magic',
+                colors: {
+                    '--bg': '#1a1a2e',
+                    '--surface': '#16213e',
+                    '--surface-hover': '#1f2b47',
+                    '--accent': '#9d84b7',
+                    '--accent-dim': '#8b72a5',
+                    '--text': '#e0e0e0',
+                    '--text-dim': '#a0a0b0',
+                    '--red': '#ff6b9d',
+                    '--orange': '#b8a0d0',
+                    '--lavender': '#7d6a94',
+                    '--pastel-pink': '#c8b0dd',
+                    '--lilac': '#a890c9'
+                }
+            },
+            bubblegum: {
+                name: '🍬 Bubblegum Pop',
+                colors: {
+                    '--bg': '#fff0f5',
+                    '--surface': '#ffffff',
+                    '--surface-hover': '#ffe4f0',
+                    '--accent': '#ff69b4',
+                    '--accent-dim': '#ff5ba3',
+                    '--text': '#5c2e4a',
+                    '--text-dim': '#9b6f8a',
+                    '--red': '#ff6b9d',
+                    '--orange': '#ffb4d1',
+                    '--lavender': '#ffc8dd',
+                    '--pastel-pink': '#ffd8e8',
+                    '--lilac': '#ff85c0'
+                }
+            }
+        };
+        
         // Current date being viewed/edited (defaults to today)
         let currentDateKey = getTodayKey();
         
@@ -754,6 +934,107 @@
             localStorage.setItem('goals', JSON.stringify(goals));
             localStorage.setItem('trackerData', JSON.stringify(data));
             localStorage.setItem('goalMetadata', JSON.stringify(goalMetadata));
+            localStorage.setItem('currentTheme', currentTheme);
+        }
+        
+        // Apply theme
+        function applyTheme(themeName) {
+            const theme = themes[themeName];
+            if (!theme) return;
+            
+            const root = document.documentElement;
+            Object.keys(theme.colors).forEach(key => {
+                root.style.setProperty(key, theme.colors[key]);
+            });
+            
+            currentTheme = themeName;
+            saveData();
+            
+            // Trigger glitter effect
+            createGlitter(window.innerWidth / 2, window.innerHeight / 2);
+        }
+        
+        // Create glitter effect
+        function createGlitter(x, y) {
+            for (let i = 0; i < 8; i++) {
+                const glitter = document.createElement('div');
+                glitter.className = 'glitter';
+                glitter.style.left = x + (Math.random() - 0.5) * 100 + 'px';
+                glitter.style.top = y + (Math.random() - 0.5) * 100 + 'px';
+                document.body.appendChild(glitter);
+                
+                setTimeout(() => glitter.remove(), 1500);
+            }
+        }
+        
+        // Render theme selector
+        function renderThemeSelector() {
+            const selector = document.getElementById('themeSelector');
+            selector.innerHTML = '';
+            
+            Object.keys(themes).forEach(themeKey => {
+                const theme = themes[themeKey];
+                const option = document.createElement('div');
+                option.className = 'theme-option' + (themeKey === currentTheme ? ' active' : '');
+                option.style.background = theme.colors['--bg'];
+                option.style.color = theme.colors['--text'];
+                option.textContent = theme.name;
+                option.onclick = () => {
+                    applyTheme(themeKey);
+                    renderThemeSelector();
+                };
+                selector.appendChild(option);
+            });
+        }
+        
+        // Drag and drop for goals
+        let draggedIndex = null;
+        
+        function handleDragStart(e, index) {
+            draggedIndex = index;
+            e.currentTarget.classList.add('dragging');
+        }
+        
+        function handleDragEnd(e) {
+            e.currentTarget.classList.remove('dragging');
+        }
+        
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+        
+        function handleDrop(e, dropIndex) {
+            e.preventDefault();
+            
+            if (draggedIndex === null || draggedIndex === dropIndex) return;
+            
+            // Reorder goals array
+            const [movedGoal] = goals.splice(draggedIndex, 1);
+            goals.splice(dropIndex, 0, movedGoal);
+            
+            // Reorder metadata
+            const [movedMeta] = Object.entries(goalMetadata).splice(draggedIndex, 1);
+            const newMetadata = {};
+            goals.forEach((goal, idx) => {
+                if (idx === dropIndex) {
+                    newMetadata[idx] = movedMeta ? movedMeta[1] : {};
+                } else if (idx < dropIndex) {
+                    newMetadata[idx] = goalMetadata[idx < draggedIndex ? idx : idx + 1] || {};
+                } else {
+                    newMetadata[idx] = goalMetadata[idx > draggedIndex ? idx : idx - 1] || {};
+                }
+            });
+            goalMetadata = newMetadata;
+            
+            // Reorder data arrays for each date
+            Object.keys(data).forEach(date => {
+                const [movedValue] = data[date].splice(draggedIndex, 1);
+                data[date].splice(dropIndex, 0, movedValue);
+            });
+            
+            saveData();
+            renderSettings();
+            draggedIndex = null;
         }
         
         // Get today's date key
@@ -811,6 +1092,15 @@
             data[currentDateKey][index] = !data[currentDateKey][index];
             saveData();
             renderToday();
+            
+            // Add glitter effect on completion
+            if (data[currentDateKey][index]) {
+                const goalItems = document.querySelectorAll('.goal-item');
+                if (goalItems[index]) {
+                    const rect = goalItems[index].getBoundingClientRect();
+                    createGlitter(rect.left + rect.width / 2, rect.top + rect.height / 2);
+                }
+            }
         }
         
         // Calculate streak
@@ -1563,6 +1853,8 @@
         
         // Render Settings view
         function renderSettings() {
+            renderThemeSelector();
+            
             const goalSettings = document.getElementById('goalSettings');
             goalSettings.innerHTML = '';
             
@@ -1570,8 +1862,15 @@
                 const metadata = goalMetadata[index] || {};
                 const settingItem = document.createElement('div');
                 settingItem.className = 'goal-setting-item';
+                settingItem.draggable = true;
+                settingItem.ondragstart = (e) => handleDragStart(e, index);
+                settingItem.ondragend = handleDragEnd;
+                settingItem.ondragover = handleDragOver;
+                settingItem.ondrop = (e) => handleDrop(e, index);
+                
                 settingItem.innerHTML = `
                     <div class="goal-setting-row">
+                        <span style="cursor: move; margin-right: 8px;">☰</span>
                         <input 
                             type="text" 
                             class="goal-input" 
@@ -1729,6 +2028,7 @@
         }
         
         // Initialize
+        applyTheme(currentTheme); // Apply saved theme
         currentDateKey = getTodayKey();
         document.getElementById('dateInput').value = currentDateKey;
         renderToday();
