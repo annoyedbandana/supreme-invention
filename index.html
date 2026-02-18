@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>My Life Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Mono:wght@700&family=Playfair+Display:wght@400;700;900&family=Montserrat:wght@400;600;700&family=Quicksand:wght@400;600;700&family=Cinzel:wght@400;700;900&family=Pacifico&family=Lora:wght@400;600;700&family=Raleway:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
@@ -51,6 +51,23 @@
             padding: 30px 0;
             border-bottom: 2px solid var(--lavender);
             margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+            background: var(--header-bg);
+        }
+        
+        /* Theme background pattern */
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: var(--pattern-opacity);
+            background: var(--theme-pattern);
+            background-size: var(--pattern-size);
+            z-index: 0;
         }
         
         h1 {
@@ -58,8 +75,22 @@
             font-size: clamp(1.8rem, 5vw, 2.5rem);
             letter-spacing: -1px;
             margin-bottom: 10px;
-            color: var(--lilac);
-            font-weight: 700;
+            font-weight: 800;
+            position: relative;
+            z-index: 1;
+            background: var(--glitter-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            background-size: 200% auto;
+            animation: shimmer 3s linear infinite;
+            filter: drop-shadow(0 0 20px var(--glitter-glow));
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
         }
         
         .subtitle {
@@ -587,6 +618,296 @@
             cursor: pointer;
         }
         
+        /* Category badges and groups */
+        .category-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        
+        .category-group {
+            margin-bottom: 25px;
+        }
+        
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            background: var(--surface);
+            border-radius: 12px;
+            border-left: 4px solid;
+        }
+        
+        .category-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        
+        .category-selector {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid var(--lavender);
+            background: var(--surface);
+            color: var(--text);
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+        
+        /* Badges and Story Mode */
+        .badge-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .badge-item {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .badge-item.unlocked {
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px rgba(212, 165, 249, 0.3);
+            animation: badgeUnlock 0.6s ease-out;
+        }
+        
+        .badge-item.locked {
+            opacity: 0.4;
+            filter: grayscale(1);
+        }
+        
+        .badge-icon {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+        }
+        
+        .badge-name {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+        
+        .badge-desc {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+        }
+        
+        @keyframes badgeUnlock {
+            0% { transform: scale(0.8) rotate(-10deg); opacity: 0; }
+            50% { transform: scale(1.2) rotate(5deg); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        
+        /* Story Mode */
+        .story-card {
+            background: linear-gradient(135deg, var(--surface) 0%, var(--surface-hover) 100%);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 4px solid var(--accent);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .story-chapter {
+            font-size: 0.9rem;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .story-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 12px;
+        }
+        
+        .story-text {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--text);
+            font-style: italic;
+            margin-bottom: 15px;
+        }
+        
+        .story-progress {
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 15px;
+        }
+        
+        .story-progress-bar {
+            background: var(--surface-hover);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+        
+        .story-progress-fill {
+            background: linear-gradient(90deg, var(--accent), var(--lilac));
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+        
+        /* Character Sheet */
+        .character-sheet {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid var(--accent);
+        }
+        
+        .character-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-align: center;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+        
+        .character-level {
+            font-size: 0.9rem;
+            text-align: center;
+            color: var(--text-dim);
+            margin-bottom: 15px;
+        }
+        
+        .stat-bar {
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text);
+            margin-bottom: 5px;
+        }
+        
+        .stat-bar-container {
+            background: var(--bg);
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        .stat-bar-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.5s ease;
+        }
+        
+        .stat-bar-fill.discipline { background: linear-gradient(90deg, #ff6b9d, #ff9a76); }
+        .stat-bar-fill.resilience { background: linear-gradient(90deg, #6bb6ff, #4a9eff); }
+        .stat-bar-fill.balance { background: linear-gradient(90deg, #7cc97f, #6bba70); }
+        
+        /* Leaderboard */
+        .leaderboard-item {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid;
+        }
+        
+        .leaderboard-item.gold { border-left-color: #ffd700; }
+        .leaderboard-item.silver { border-left-color: #c0c0c0; }
+        .leaderboard-item.bronze { border-left-color: #cd7f32; }
+        
+        .leaderboard-rank {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            width: 40px;
+        }
+        
+        .leaderboard-info {
+            flex: 1;
+            margin-left: 15px;
+        }
+        
+        .leaderboard-goal {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 3px;
+        }
+        
+        .leaderboard-streak {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+        }
+        
+        /* Confetti Animation */
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+        
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            pointer-events: none;
+            z-index: 9999;
+            animation: confetti-fall 3s linear forwards;
+        }
+        
+        /* Level Up Animation */
+        @keyframes levelUp {
+            0% {
+                transform: scale(0) rotate(-180deg);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.3) rotate(10deg);
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+        
+        .level-up-notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, var(--accent), var(--lilac));
+            color: white;
+            padding: 30px 40px;
+            border-radius: 20px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            z-index: 10000;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            animation: levelUp 0.6s ease-out;
+        }
+        
         /* Theme selector */
         .theme-selector {
             display: grid;
@@ -612,6 +933,36 @@
         
         .theme-option.active {
             border: 2px solid #4a3f5c;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        /* Font selector */
+        .font-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .font-option {
+            padding: 15px;
+            border-radius: 12px;
+            border: 2px solid var(--lavender);
+            background: var(--surface);
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        .font-option:hover {
+            transform: scale(1.05);
+            background: var(--surface-hover);
+        }
+        
+        .font-option.active {
+            border: 2px solid var(--accent);
+            background: var(--surface-hover);
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         
@@ -683,6 +1034,7 @@
         <div class="view-switcher">
             <button class="view-btn active" onclick="switchView('today')">Today</button>
             <button class="view-btn" onclick="switchView('stats')">Stats</button>
+            <button class="view-btn" onclick="switchView('quest')">⚔️ Quest</button>
             <button class="view-btn" onclick="switchView('history')">History</button>
             <button class="view-btn" onclick="switchView('settings')">Settings</button>
         </div>
@@ -712,9 +1064,14 @@
                     <div style="display: flex; justify-content: center; padding: 20px;">
                         <canvas id="multiRingChart" width="360" height="520"></canvas>
                     </div>
-                    <!-- Goal Filter moved here -->
+                    <!-- Category and Goal Filters moved here -->
                     <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--lavender);">
-                        <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 10px;">Show/Hide Habits:</p>
+                        <!-- Category Filter -->
+                        <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 8px;">📁 Filter by Category:</p>
+                        <div id="categoryFilter" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;"></div>
+                        
+                        <!-- Individual Goal Filter -->
+                        <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 8px;">📝 Or Select Individual Goals:</p>
                         <div id="goalFilter" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
                     </div>
                 </div>
@@ -749,6 +1106,27 @@
             <div class="goal-stats" id="goalStats"></div>
         </div>
         
+        <!-- QUEST VIEW -->
+        <div id="questView" class="section" style="display:none;">
+            <!-- Story Card -->
+            <div class="story-card" id="storyCard"></div>
+            
+            <!-- Character Sheet -->
+            <div class="character-sheet" id="characterSheet"></div>
+            
+            <!-- Streaks Leaderboard -->
+            <div style="margin-bottom: 30px;">
+                <h2 style="font-size: 1.3rem; margin-bottom: 15px; color: var(--accent);">🏆 Streaks Leaderboard</h2>
+                <div id="streaksLeaderboard"></div>
+            </div>
+            
+            <!-- Achievement Badges -->
+            <div>
+                <h2 style="font-size: 1.3rem; margin-bottom: 15px; color: var(--accent);">🏅 Achievement Badges</h2>
+                <div class="badge-grid" id="badgeGrid"></div>
+            </div>
+        </div>
+        
         <!-- HISTORY VIEW -->
         <div id="historyView" class="section">
             <h2 style="margin-bottom: 20px;">Last 30 Days</h2>
@@ -771,19 +1149,34 @@
         
         <!-- SETTINGS VIEW -->
         <div id="settingsView" class="section">
-            <div class="settings-section">
-                <h3>🎨 Color Theme</h3>
-                <p style="color: var(--text-dim); margin: 10px 0; font-size: 0.9rem;">Choose your vibe</p>
-                <div class="theme-selector" id="themeSelector"></div>
+            <!-- APPEARANCE SECTION -->
+            <div class="settings-section" style="background: linear-gradient(135deg, var(--surface) 0%, var(--surface-hover) 100%); padding: 25px; border-radius: 16px; margin-bottom: 25px;">
+                <h2 style="font-size: 1.5rem; margin-bottom: 20px; color: var(--accent);">✨ Appearance</h2>
+                
+                <!-- Theme Selector -->
+                <div style="margin-bottom: 30px;">
+                    <h3>🎨 Color Theme</h3>
+                    <p style="color: var(--text-dim); margin: 10px 0; font-size: 0.9rem;">Choose your vibe</p>
+                    <div class="theme-selector" id="themeSelector"></div>
+                </div>
+                
+                <!-- Font Selector -->
+                <div>
+                    <h3>🔤 Font Style</h3>
+                    <p style="color: var(--text-dim); margin: 10px 0; font-size: 0.9rem;">Pick your typography</p>
+                    <div class="font-selector" id="fontSelector"></div>
+                </div>
             </div>
             
-            <div class="settings-section" style="margin-top: 30px;">
+            <!-- GOALS SECTION -->
+            <div class="settings-section">
                 <h3>Your Goals</h3>
                 <p style="color: var(--text-dim); margin: 10px 0; font-size: 0.85rem;">💡 Drag to reorder</p>
                 <div class="goal-settings" id="goalSettings"></div>
                 <button class="add-goal-btn" onclick="addGoal()">+ Add New Goal</button>
             </div>
             
+            <!-- BACKUP SECTION -->
             <div class="settings-section" style="margin-top: 30px;">
                 <h3>📦 Backup & Restore</h3>
                 <p style="color: var(--text-dim); margin: 10px 0; font-size: 0.9rem;">Save your data to a file or load from a previous backup</p>
@@ -794,6 +1187,7 @@
                 <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(event)">
             </div>
             
+            <!-- DANGER ZONE -->
             <div class="danger-zone">
                 <h3>⚠️ Danger Zone</h3>
                 <p style="color: var(--text-dim); margin: 10px 0;">This will delete all your data and cannot be undone.</p>
@@ -814,11 +1208,146 @@
         
         let data = JSON.parse(localStorage.getItem('trackerData')) || {};
         
-        // Goal metadata (start dates, notes, etc.)
+        // Goal metadata (start dates, notes, categories, etc.)
         let goalMetadata = JSON.parse(localStorage.getItem('goalMetadata')) || {};
+        
+        // Available categories
+        const categories = [
+            { id: 'physical', name: '💪 Physical', color: '#ff6b9d' },
+            { id: 'mental', name: '🧠 Mental', color: '#6bb6ff' },
+            { id: 'creative', name: '🎨 Creative', color: '#d4a5f9' },
+            { id: 'social', name: '💬 Social', color: '#ffc8dd' },
+            { id: 'spiritual', name: '🧘 Spiritual', color: '#9b7fbb' },
+            { id: 'career', name: '💼 Career', color: '#7cc97f' },
+            { id: 'hobbies', name: '🎮 Hobbies', color: '#ff9a76' },
+            { id: 'other', name: '✨ Other', color: '#c4a4a4' }
+        ];
         
         // Current theme
         let currentTheme = localStorage.getItem('currentTheme') || 'lavender';
+        
+        // Current font
+        let currentFont = localStorage.getItem('currentFont') || 'default';
+        
+        // User progress data
+        let userProgress = JSON.parse(localStorage.getItem('userProgress')) || {
+            totalDaysTracked: 0,
+            level: 1,
+            xp: 0,
+            currentChapter: 1,
+            badges: [],
+            stats: {
+                discipline: 0,
+                resilience: 0,
+                balance: 0
+            },
+            longestStreak: 0,
+            perfectDays: 0,
+            comebacks: 0
+        };
+        
+        // Achievement Badges
+        const badges = {
+            // Streak Badges
+            first_steps: { id: 'first_steps', name: '👣 First Steps', desc: 'Complete 7 days', requirement: 'streak_7', icon: '👣', unlocked: false },
+            week_warrior: { id: 'week_warrior', name: '🔥 Week Warrior', desc: '7 day streak', requirement: 'streak_7', icon: '🔥', unlocked: false },
+            fortnight_champion: { id: 'fortnight_champion', name: '⚔️ Fortnight Champion', desc: '14 day streak', requirement: 'streak_14', icon: '⚔️', unlocked: false },
+            month_master: { id: 'month_master', name: '👑 Month Master', desc: '30 day streak', requirement: 'streak_30', icon: '👑', unlocked: false },
+            unstoppable: { id: 'unstoppable', name: '💫 Unstoppable', desc: '60 day streak', requirement: 'streak_60', icon: '💫', unlocked: false },
+            legendary: { id: 'legendary', name: '🌟 Legendary', desc: '100 day streak', requirement: 'streak_100', icon: '🌟', unlocked: false },
+            
+            // Perfection Badges
+            perfect_day: { id: 'perfect_day', name: '✨ Perfect Day', desc: '100% completion once', requirement: 'perfect_1', icon: '✨', unlocked: false },
+            perfect_week: { id: 'perfect_week', name: '💯 Perfect Week', desc: '7 days of 100%', requirement: 'perfect_7', icon: '💯', unlocked: false },
+            overachiever: { id: 'overachiever', name: '🏆 Overachiever', desc: '30 perfect days', requirement: 'perfect_30', icon: '🏆', unlocked: false },
+            
+            // Category Badges
+            warrior_body: { id: 'warrior_body', name: '💪 Master of Body', desc: '100% Physical for 14 days', requirement: 'category_physical_14', icon: '💪', unlocked: false },
+            scholar_mind: { id: 'scholar_mind', name: '🧠 Master of Mind', desc: '100% Mental for 14 days', requirement: 'category_mental_14', icon: '🧠', unlocked: false },
+            creative_soul: { id: 'creative_soul', name: '🎨 Master of Creation', desc: '100% Creative for 14 days', requirement: 'category_creative_14', icon: '🎨', unlocked: false },
+            
+            // Special Badges
+            phoenix_rising: { id: 'phoenix_rising', name: '🔥 Phoenix Rising', desc: 'Comeback after 7+ day break', requirement: 'comeback', icon: '🔥', unlocked: false },
+            balanced_life: { id: 'balanced_life', name: '⚖️ Balanced Life', desc: '60% or more in all categories for 7 days', requirement: 'balance_7', icon: '⚖️', unlocked: false },
+            early_bird: { id: 'early_bird', name: '🌅 Early Bird', desc: 'Complete goals before 9am, 7 days', requirement: 'morning_7', icon: '🌅', unlocked: false },
+            
+            // Boss Battle Badges
+            slayed_procrastination: { id: 'slayed_procrastination', name: '🐉 Slayed the Dragon', desc: 'Defeated Procrastination Boss', requirement: 'boss_1', icon: '🐉', unlocked: false },
+            conquered_burnout: { id: 'conquered_burnout', name: '🛡️ Conquered Burnout', desc: 'Defeated Burnout Beast', requirement: 'boss_2', icon: '🛡️', unlocked: false }
+        };
+        
+        // Story Mode Chapters
+        const storyChapters = {
+            1: {
+                title: 'The Awakening',
+                story: 'You stand at the foot of the Mountain of Change. The path ahead is shrouded in mist, but something stirs within you—a spark of determination. Today, you take the first step.',
+                requirement: 'days_7',
+                reward: 'first_steps'
+            },
+            2: {
+                title: 'Building Momentum',
+                story: 'The climb grows steeper, but your legs grow stronger. Each day, you prove to yourself that you can show up. The mist begins to clear, revealing the path ahead.',
+                requirement: 'streak_14',
+                reward: 'fortnight_champion'
+            },
+            3: {
+                title: 'The Trial of Doubt',
+                story: 'You face the Mountain of Doubt. Past failures whisper in your ear, shadows of who you used to be. But you have come too far to turn back. This is where heroes are forged.',
+                requirement: 'days_30',
+                reward: 'month_master'
+            },
+            4: {
+                title: 'The Transformation',
+                story: 'You are no longer the person who started this journey. Your old excuses do not recognize you anymore. You have become something more—disciplined, resilient, unstoppable.',
+                requirement: 'days_60',
+                reward: 'unstoppable'
+            },
+            5: {
+                title: 'The Legacy',
+                story: 'Now you walk as a legend. Others see your discipline and wonder how you do it. But you know the secret: one day at a time, one choice at a time. This is your legacy.',
+                requirement: 'days_100',
+                reward: 'legendary'
+            }
+        };
+        
+        // Available fonts
+        const fonts = {
+            default: {
+                name: '✨ Default',
+                family: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+                headerFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif"
+            },
+            elegant: {
+                name: '👑 Elegant Serif',
+                family: "'Lora', Georgia, serif",
+                headerFamily: "'Playfair Display', Georgia, serif"
+            },
+            modern: {
+                name: '🎯 Modern Sans',
+                family: "'Montserrat', 'Helvetica Neue', sans-serif",
+                headerFamily: "'Montserrat', 'Helvetica Neue', sans-serif"
+            },
+            playful: {
+                name: '🎨 Playful Rounded',
+                family: "'Quicksand', 'Comic Sans MS', sans-serif",
+                headerFamily: "'Quicksand', 'Comic Sans MS', sans-serif"
+            },
+            luxury: {
+                name: '💎 Luxury Classic',
+                family: "'Lora', Georgia, serif",
+                headerFamily: "'Cinzel', Georgia, serif"
+            },
+            cute: {
+                name: '🌸 Cute Script',
+                family: "'Quicksand', 'Comic Sans MS', sans-serif",
+                headerFamily: "'Pacifico', cursive"
+            },
+            minimal: {
+                name: '⚡ Minimal Clean',
+                family: "'Raleway', 'Helvetica Neue', sans-serif",
+                headerFamily: "'Raleway', 'Helvetica Neue', sans-serif"
+            }
+        };
         
         // Available themes
         const themes = {
@@ -836,24 +1365,128 @@
                     '--orange': '#ffb4d1',
                     '--lavender': '#e0c9f5',
                     '--pastel-pink': '#ffc8dd',
-                    '--lilac': '#d4a5f9'
+                    '--lilac': '#d4a5f9',
+                    '--header-bg': 'linear-gradient(135deg, #e0c9f5 0%, #ffc8dd 100%)',
+                    '--glitter-gradient': 'linear-gradient(90deg, #d4a5f9, #ffc8dd, #e0c9f5, #d4a5f9)',
+                    '--glitter-glow': 'rgba(212, 165, 249, 0.5)',
+                    '--theme-pattern': 'radial-gradient(circle, rgba(212,165,249,0.3) 1px, transparent 1px)',
+                    '--pattern-size': '20px 20px',
+                    '--pattern-opacity': '0.3'
                 }
             },
-            sunset: {
-                name: '🌅 Sunset Vibes',
+            hogwarts: {
+                name: '⚡ Hogwarts Magic',
                 colors: {
-                    '--bg': '#fff5f0',
-                    '--surface': '#ffffff',
-                    '--surface-hover': '#ffe8dd',
-                    '--accent': '#ff9a76',
-                    '--accent-dim': '#ff8566',
-                    '--text': '#5c3a2e',
-                    '--text-dim': '#9b7d6f',
-                    '--red': '#ff6b6b',
-                    '--orange': '#ffa07a',
-                    '--lavender': '#ffd4b8',
-                    '--pastel-pink': '#ffb8a8',
-                    '--lilac': '#ff9a76'
+                    '--bg': '#1a1a2e',
+                    '--surface': '#2d1b4e',
+                    '--surface-hover': '#3d2b5e',
+                    '--accent': '#d4af37',
+                    '--accent-dim': '#c49f27',
+                    '--text': '#f4e4c1',
+                    '--text-dim': '#c4b491',
+                    '--red': '#8b0000',
+                    '--orange': '#d4af37',
+                    '--lavender': '#4a3a5c',
+                    '--pastel-pink': '#8b6f9b',
+                    '--lilac': '#9b7fbb',
+                    '--header-bg': 'linear-gradient(135deg, #2d1b4e 0%, #1a1a2e 100%)',
+                    '--glitter-gradient': 'linear-gradient(90deg, #d4af37, #f4e4c1, #ffd700, #d4af37)',
+                    '--glitter-glow': 'rgba(212, 175, 55, 0.8)',
+                    '--theme-pattern': 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(212,175,55,0.1) 10px, rgba(212,175,55,0.1) 20px), radial-gradient(circle at 20% 50%, rgba(139,0,0,0.2) 1px, transparent 1px)',
+                    '--pattern-size': '40px 40px',
+                    '--pattern-opacity': '0.4'
+                }
+            },
+            barbie: {
+                name: '💖 Barbie Dreamhouse',
+                colors: {
+                    '--bg': '#fff0f9',
+                    '--surface': '#ffe5f5',
+                    '--surface-hover': '#ffd0eb',
+                    '--accent': '#ff69b4',
+                    '--accent-dim': '#ff5ba3',
+                    '--text': '#c71585',
+                    '--text-dim': '#ff69b4',
+                    '--red': '#ff1493',
+                    '--orange': '#ffb3d9',
+                    '--lavender': '#ffb3ff',
+                    '--pastel-pink': '#ffc0cb',
+                    '--lilac': '#ff69b4',
+                    '--header-bg': 'linear-gradient(135deg, #ff69b4 0%, #ff1493 50%, #ff69b4 100%)',
+                    '--glitter-gradient': 'linear-gradient(90deg, #ff69b4, #ffd0eb, #ff1493, #ffc0cb, #ff69b4)',
+                    '--glitter-glow': 'rgba(255, 105, 180, 0.8)',
+                    '--theme-pattern': 'radial-gradient(circle, rgba(255,20,147,0.15) 2px, transparent 2px), radial-gradient(circle at 50% 50%, rgba(255,192,203,0.2) 1px, transparent 1px)',
+                    '--pattern-size': '30px 30px, 15px 15px',
+                    '--pattern-opacity': '0.5'
+                }
+            },
+            spanish: {
+                name: '🌺 Spanish Villa',
+                colors: {
+                    '--bg': '#fff8f0',
+                    '--surface': '#fffaf5',
+                    '--surface-hover': '#ffeedd',
+                    '--accent': '#e97451',
+                    '--accent-dim': '#d96441',
+                    '--text': '#5c3a21',
+                    '--text-dim': '#8b6f47',
+                    '--red': '#c1440e',
+                    '--orange': '#ff8c42',
+                    '--lavender': '#f4a460',
+                    '--pastel-pink': '#ffd4a3',
+                    '--lilac': '#e97451',
+                    '--header-bg': 'linear-gradient(135deg, #ffd4a3 0%, #e97451 100%)',
+                    '--glitter-gradient': 'linear-gradient(90deg, #ffd4a3, #ff8c42, #f4a460, #e97451, #ffd4a3)',
+                    '--glitter-glow': 'rgba(233, 116, 81, 0.6)',
+                    '--theme-pattern': 'repeating-conic-gradient(from 45deg at 50% 50%, #e97451 0deg 90deg, transparent 90deg 180deg), radial-gradient(circle at 25% 25%, rgba(255,140,66,0.2) 1px, transparent 1px)',
+                    '--pattern-size': '60px 60px, 20px 20px',
+                    '--pattern-opacity': '0.3'
+                }
+            },
+            velvet: {
+                name: '🍷 Velvet Luxe',
+                colors: {
+                    '--bg': '#2d1b2e',
+                    '--surface': '#3d2b3e',
+                    '--surface-hover': '#4d3b4e',
+                    '--accent': '#8b4789',
+                    '--accent-dim': '#7b3779',
+                    '--text': '#e8d4e7',
+                    '--text-dim': '#b8a4b7',
+                    '--red': '#6b2847',
+                    '--orange': '#9b5789',
+                    '--lavender': '#8b4789',
+                    '--pastel-pink': '#c895c4',
+                    '--lilac': '#a867a6',
+                    '--header-bg': 'linear-gradient(135deg, #3d2b3e 0%, #2d1b2e 100%)',
+                    '--glitter-gradient': 'linear-gradient(90deg, #8b4789, #c895c4, #a867a6, #e8d4e7, #8b4789)',
+                    '--glitter-glow': 'rgba(139, 71, 137, 0.7)',
+                    '--theme-pattern': 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(139,71,137,0.15) 2px, rgba(139,71,137,0.15) 4px), repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(139,71,137,0.15) 2px, rgba(139,71,137,0.15) 4px)',
+                    '--pattern-size': '100% 100%',
+                    '--pattern-opacity': '0.6'
+                }
+            },
+            burgundy: {
+                name: '🍂 Deep Burgundy',
+                colors: {
+                    '--bg': '#1a0f0f',
+                    '--surface': '#3d1f1f',
+                    '--surface-hover': '#4d2f2f',
+                    '--accent': '#8b2f39',
+                    '--accent-dim': '#7b1f29',
+                    '--text': '#f4d4d4',
+                    '--text-dim': '#c4a4a4',
+                    '--red': '#6b0f1a',
+                    '--orange': '#9b3f49',
+                    '--lavender': '#7b2f39',
+                    '--pastel-pink': '#b85f69',
+                    '--lilac': '#8b2f39',
+                    '--header-bg': 'linear-gradient(135deg, #6b0f1a 0%, #3d1f1f 100%)',
+                    '--glitter-gradient': 'linear-gradient(90deg, #8b2f39, #d4af37, #b85f69, #d4af37, #8b2f39)',
+                    '--glitter-glow': 'rgba(212, 175, 55, 0.6)',
+                    '--theme-pattern': 'radial-gradient(ellipse at 50% 0%, rgba(212,175,55,0.15) 0%, transparent 50%), repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(139,47,57,0.1) 20px, rgba(139,47,57,0.1) 40px)',
+                    '--pattern-size': '100% 200%, 80px 80px',
+                    '--pattern-opacity': '0.5'
                 }
             },
             ocean: {
@@ -870,58 +1503,13 @@
                     '--orange': '#89c4ff',
                     '--lavender': '#b8d8ff',
                     '--pastel-pink': '#c8e0ff',
-                    '--lilac': '#6bb6ff'
-                }
-            },
-            forest: {
-                name: '🌲 Forest Calm',
-                colors: {
-                    '--bg': '#f4f9f4',
-                    '--surface': '#ffffff',
-                    '--surface-hover': '#e8f5e8',
-                    '--accent': '#6bba70',
-                    '--accent-dim': '#5ba860',
-                    '--text': '#2d4a2d',
-                    '--text-dim': '#6b8a6b',
-                    '--red': '#ff8b8b',
-                    '--orange': '#a8d5a8',
-                    '--lavender': '#c8e6c8',
-                    '--pastel-pink': '#d8f0d8',
-                    '--lilac': '#7cc97f'
-                }
-            },
-            midnight: {
-                name: '🌙 Midnight Magic',
-                colors: {
-                    '--bg': '#1a1a2e',
-                    '--surface': '#16213e',
-                    '--surface-hover': '#1f2b47',
-                    '--accent': '#9d84b7',
-                    '--accent-dim': '#8b72a5',
-                    '--text': '#e0e0e0',
-                    '--text-dim': '#a0a0b0',
-                    '--red': '#ff6b9d',
-                    '--orange': '#b8a0d0',
-                    '--lavender': '#7d6a94',
-                    '--pastel-pink': '#c8b0dd',
-                    '--lilac': '#a890c9'
-                }
-            },
-            bubblegum: {
-                name: '🍬 Bubblegum Pop',
-                colors: {
-                    '--bg': '#fff0f5',
-                    '--surface': '#ffffff',
-                    '--surface-hover': '#ffe4f0',
-                    '--accent': '#ff69b4',
-                    '--accent-dim': '#ff5ba3',
-                    '--text': '#5c2e4a',
-                    '--text-dim': '#9b6f8a',
-                    '--red': '#ff6b9d',
-                    '--orange': '#ffb4d1',
-                    '--lavender': '#ffc8dd',
-                    '--pastel-pink': '#ffd8e8',
-                    '--lilac': '#ff85c0'
+                    '--lilac': '#6bb6ff',
+                    '--header-bg': 'linear-gradient(135deg, #b8d8ff 0%, #6bb6ff 100%)',
+                    '--glitter-gradient': 'linear-gradient(90deg, #4a9eff, #b8d8ff, #89c4ff, #6bb6ff, #4a9eff)',
+                    '--glitter-glow': 'rgba(74, 158, 255, 0.5)',
+                    '--theme-pattern': 'repeating-linear-gradient(90deg, transparent, transparent 10px, rgba(74,158,255,0.1) 10px, rgba(74,158,255,0.1) 20px), radial-gradient(circle, rgba(107,182,255,0.15) 1px, transparent 1px)',
+                    '--pattern-size': '40px 100%, 25px 25px',
+                    '--pattern-opacity': '0.4'
                 }
             }
         };
@@ -935,6 +1523,8 @@
             localStorage.setItem('trackerData', JSON.stringify(data));
             localStorage.setItem('goalMetadata', JSON.stringify(goalMetadata));
             localStorage.setItem('currentTheme', currentTheme);
+            localStorage.setItem('currentFont', currentFont);
+            localStorage.setItem('userProgress', JSON.stringify(userProgress));
         }
         
         // Apply theme
@@ -952,6 +1542,96 @@
             
             // Trigger glitter effect
             createGlitter(window.innerWidth / 2, window.innerHeight / 2);
+        }
+        
+        // Apply font
+        function applyFont(fontName) {
+            const font = fonts[fontName];
+            if (!font) return;
+            
+            const root = document.documentElement;
+            document.body.style.fontFamily = font.family;
+            
+            // Apply header font
+            const headers = document.querySelectorAll('h1, h2, h3');
+            headers.forEach(h => {
+                h.style.fontFamily = font.headerFamily;
+            });
+            
+            currentFont = fontName;
+            saveData();
+            
+            // Trigger glitter effect
+            createGlitter(window.innerWidth / 2, window.innerHeight / 2);
+        }
+        
+        // Render font selector
+        function renderFontSelector() {
+            const selector = document.getElementById('fontSelector');
+            selector.innerHTML = '';
+            
+            Object.keys(fonts).forEach(fontKey => {
+                const font = fonts[fontKey];
+                const option = document.createElement('div');
+                option.className = 'font-option' + (fontKey === currentFont ? ' active' : '');
+                option.style.fontFamily = font.headerFamily;
+                option.textContent = font.name;
+                option.onclick = () => {
+                    applyFont(fontKey);
+                    renderFontSelector();
+                };
+                selector.appendChild(option);
+            });
+        }
+        
+        // Track selected categories for filtering
+        let selectedCategories = categories.map(c => c.id);
+        
+        // Render category filter
+        function renderCategoryFilter() {
+            const filterContainer = document.getElementById('categoryFilter');
+            filterContainer.innerHTML = '';
+            
+            categories.forEach(category => {
+                const filterItem = document.createElement('div');
+                filterItem.className = 'goal-filter-item';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'goal-filter-checkbox';
+                checkbox.checked = selectedCategories.includes(category.id);
+                checkbox.id = `cat-filter-${category.id}`;
+                checkbox.onchange = () => toggleCategoryFilter(category.id);
+                
+                const label = document.createElement('label');
+                label.className = 'goal-filter-label';
+                label.htmlFor = `cat-filter-${category.id}`;
+                label.textContent = category.name;
+                
+                filterItem.appendChild(checkbox);
+                filterItem.appendChild(label);
+                filterContainer.appendChild(filterItem);
+            });
+        }
+        
+        // Toggle category filter
+        function toggleCategoryFilter(categoryId) {
+            if (selectedCategories.includes(categoryId)) {
+                selectedCategories = selectedCategories.filter(id => id !== categoryId);
+            } else {
+                selectedCategories.push(categoryId);
+            }
+            
+            // Update selected goals based on categories
+            selectedGoals = goals
+                .map((_, idx) => idx)
+                .filter(idx => {
+                    const goalCategory = goalMetadata[idx]?.category || 'other';
+                    return selectedCategories.includes(goalCategory);
+                });
+            
+            renderMultiRingChart();
+            renderGoalFilter(); // Update individual checkboxes
         }
         
         // Create glitter effect
@@ -1211,31 +1891,62 @@
             const goalsList = document.getElementById('goalsList');
             goalsList.innerHTML = '';
             
+            // Group goals by category
+            const groupedGoals = {};
+            categories.forEach(cat => {
+                groupedGoals[cat.id] = [];
+            });
+            
             goals.forEach((goal, index) => {
-                const streak = calculateStreak(index);
-                const completed = data[currentDateKey][index];
+                const category = goalMetadata[index]?.category || 'other';
+                groupedGoals[category].push({ goal, index });
+            });
+            
+            // Render each category group
+            categories.forEach(category => {
+                const goalsInCategory = groupedGoals[category.id];
+                if (goalsInCategory.length === 0) return;
                 
-                const goalItem = document.createElement('div');
-                goalItem.className = 'goal-item' + (completed ? ' completed' : '');
-                goalItem.innerHTML = `
-                    <div class="goal-info">
-                        <div class="goal-name">${goal}</div>
-                        <div class="streak-info">
-                            <span class="fire">${streak > 0 ? '🔥' : '💤'}</span>
-                            <span>${streak} day streak</span>
+                // Category header
+                const categoryGroup = document.createElement('div');
+                categoryGroup.className = 'category-group';
+                
+                const categoryHeader = document.createElement('div');
+                categoryHeader.className = 'category-header';
+                categoryHeader.style.borderLeftColor = category.color;
+                categoryHeader.innerHTML = `<h3>${category.name}</h3>`;
+                categoryGroup.appendChild(categoryHeader);
+                
+                // Goals in this category
+                goalsInCategory.forEach(({ goal, index }) => {
+                    const streak = calculateStreak(index);
+                    const completed = data[currentDateKey][index];
+                    
+                    const goalItem = document.createElement('div');
+                    goalItem.className = 'goal-item' + (completed ? ' completed' : '');
+                    goalItem.innerHTML = `
+                        <div class="goal-info">
+                            <div class="goal-name">${goal}</div>
+                            <div class="streak-info">
+                                <span class="fire">${streak > 0 ? '🔥' : '💤'}</span>
+                                <span>${streak} day streak</span>
+                            </div>
                         </div>
-                    </div>
-                    <button class="toggle-btn ${completed ? 'active' : ''}" onclick="toggleGoal(${index})">
-                        ${completed ? '✓' : ''}
-                    </button>
-                `;
-                goalsList.appendChild(goalItem);
+                        <button class="toggle-btn ${completed ? 'active' : ''}" onclick="toggleGoal(${index})">
+                            ${completed ? '✓' : ''}
+                        </button>
+                    `;
+                    categoryGroup.appendChild(goalItem);
+                });
+                
+                goalsList.appendChild(categoryGroup);
             });
         }
         
         // Render Stats view
         function renderStats() {
-            // Render goal filter checkboxes
+            // Render category and goal filter checkboxes
+            renderCategoryFilter();
             renderGoalFilter();
             
             // Render the three donut charts
@@ -1854,6 +2565,7 @@
         // Render Settings view
         function renderSettings() {
             renderThemeSelector();
+            renderFontSelector();
             
             const goalSettings = document.getElementById('goalSettings');
             goalSettings.innerHTML = '';
@@ -1868,6 +2580,11 @@
                 settingItem.ondragover = handleDragOver;
                 settingItem.ondrop = (e) => handleDrop(e, index);
                 
+                // Build category options
+                const categoryOptions = categories.map(cat => 
+                    `<option value="${cat.id}" ${metadata.category === cat.id ? 'selected' : ''}>${cat.name}</option>`
+                ).join('');
+                
                 settingItem.innerHTML = `
                     <div class="goal-setting-row">
                         <span style="cursor: move; margin-right: 8px;">☰</span>
@@ -1879,6 +2596,12 @@
                             placeholder="Goal name"
                         />
                         <button class="delete-btn" onclick="deleteGoal(${index})">Delete</button>
+                    </div>
+                    <div class="goal-setting-row">
+                        <span class="start-date-label">Category:</span>
+                        <select class="category-selector" onchange="updateCategory(${index}, this.value)">
+                            ${categoryOptions}
+                        </select>
                     </div>
                     <div class="goal-setting-row">
                         <span class="start-date-label">Start date:</span>
@@ -1901,6 +2624,16 @@
                 `;
                 goalSettings.appendChild(settingItem);
             });
+        }
+        
+        // Update goal category
+        function updateCategory(index, category) {
+            if (!goalMetadata[index]) {
+                goalMetadata[index] = {};
+            }
+            goalMetadata[index].category = category;
+            saveData();
+            renderToday(); // Refresh to show in new category
         }
         
         // Update goal start date
@@ -2027,8 +2760,106 @@
             event.target.value = '';
         }
         
+        // QUEST MODE FUNCTIONS
+        function updateProgress() {
+            userProgress.totalDaysTracked = Object.keys(data).length;
+            userProgress.xp = Object.values(data).flat().filter(Boolean).length;
+            userProgress.level = Math.floor(userProgress.xp / 50) + 1;
+            userProgress.longestStreak = Math.max(...goals.map((_, idx) => calculateBestStreak(idx)), 0);
+            userProgress.perfectDays = Object.values(data).filter(day => day.every(Boolean) && day.length === goals.length).length;
+            userProgress.stats.discipline = Math.min(userProgress.longestStreak, 100);
+            userProgress.stats.balance = Math.min(userProgress.perfectDays * 2, 100);
+            
+            if (userProgress.totalDaysTracked >= 100) userProgress.currentChapter = 5;
+            else if (userProgress.totalDaysTracked >= 60) userProgress.currentChapter = 4;
+            else if (userProgress.totalDaysTracked >= 30) userProgress.currentChapter = 3;
+            else if (userProgress.totalDaysTracked >= 14) userProgress.currentChapter = 2;
+            else userProgress.currentChapter = 1;
+            
+            saveData();
+            checkBadges();
+        }
+        
+        function checkBadges() {
+            if (userProgress.longestStreak >= 7 && !userProgress.badges.includes('week_warrior')) unlockBadge('week_warrior');
+            if (userProgress.longestStreak >= 14 && !userProgress.badges.includes('fortnight_champion')) unlockBadge('fortnight_champion');
+            if (userProgress.longestStreak >= 30 && !userProgress.badges.includes('month_master')) unlockBadge('month_master');
+            if (userProgress.perfectDays >= 1 && !userProgress.badges.includes('perfect_day')) unlockBadge('perfect_day');
+        }
+        
+        function unlockBadge(badgeId) {
+            userProgress.badges.push(badgeId);
+            saveData();
+            createConfetti();
+        }
+        
+        function createConfetti() {
+            const colors = ['#d4a5f9', '#ffc8dd', '#e0c9f5'];
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => {
+                    const c = document.createElement('div');
+                    c.className = 'confetti';
+                    c.style.left = Math.random() * 100 + '%';
+                    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    document.body.appendChild(c);
+                    setTimeout(() => c.remove(), 3000);
+                }, i * 30);
+            }
+        }
+        
+        function renderQuest() {
+            const chapter = storyChapters[userProgress.currentChapter];
+            document.getElementById('storyCard').innerHTML = `
+                <div class="story-chapter">Chapter ${userProgress.currentChapter}</div>
+                <div class="story-title">${chapter.title}</div>
+                <div class="story-text">"${chapter.story}"</div>
+            `;
+            
+            document.getElementById('characterSheet').innerHTML = `
+                <div class="character-title">HERO THE ${userProgress.level >= 5 ? 'DETERMINED' : 'ASPIRING'}</div>
+                <div class="character-level">Level ${userProgress.level} • ${userProgress.xp} XP</div>
+                <div class="stat-bar">
+                    <div class="stat-label"><span>⚔️ Discipline</span><span>${userProgress.stats.discipline}</span></div>
+                    <div class="stat-bar-container"><div class="stat-bar-fill discipline" style="width: ${userProgress.stats.discipline}%"></div></div>
+                </div>
+            `;
+            
+            const streaks = goals.map((goal, idx) => ({ goal, streak: calculateStreak(idx) })).sort((a, b) => b.streak - a.streak).slice(0, 5);
+            document.getElementById('streaksLeaderboard').innerHTML = streaks.map((item, i) => `
+                <div class="leaderboard-item ${i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : ''}">
+                    <div class="leaderboard-rank">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1)}</div>
+                    <div class="leaderboard-info">
+                        <div class="leaderboard-goal">${item.goal}</div>
+                        <div class="leaderboard-streak">🔥 ${item.streak} day streak</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('badgeGrid').innerHTML = Object.values(badges).map(badge => `
+                <div class="badge-item ${userProgress.badges.includes(badge.id) ? 'unlocked' : 'locked'}">
+                    <div class="badge-icon">${badge.icon}</div>
+                    <div class="badge-name">${badge.name}</div>
+                    <div class="badge-desc">${badge.desc}</div>
+                </div>
+            `).join('');
+        }
+        
+        function switchView(view) {
+            document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+            document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(view + 'View').style.display = 'block';
+            event.target.classList.add('active');
+            
+            if (view === 'stats') renderStats();
+            if (view === 'history') renderHistory();
+            if (view === 'settings') renderSettings();
+            if (view === 'quest') { updateProgress(); renderQuest(); }
+        }
+        
         // Initialize
         applyTheme(currentTheme); // Apply saved theme
+        applyFont(currentFont); // Apply saved font
+        updateProgress(); // Calculate quest progress
         currentDateKey = getTodayKey();
         document.getElementById('dateInput').value = currentDateKey;
         renderToday();
