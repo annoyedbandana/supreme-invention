@@ -1034,8 +1034,7 @@
         <div class="view-switcher">
             <button class="view-btn active" onclick="switchView('today')">Today</button>
             <button class="view-btn" onclick="switchView('stats')">Stats</button>
-            <button class="view-btn" onclick="switchView('quest')">⚔️ Quest</button>
-            <button class="view-btn" onclick="switchView('history')">History</button>
+            <button class="view-btn" onclick="switchView('badges')">🏅 Badges</button>
             <button class="view-btn" onclick="switchView('settings')">Settings</button>
         </div>
         
@@ -1106,44 +1105,20 @@
             <div class="goal-stats" id="goalStats"></div>
         </div>
         
-        <!-- QUEST VIEW -->
-        <div id="questView" class="section" style="display:none;">
-            <!-- Story Card -->
-            <div class="story-card" id="storyCard"></div>
-            
-            <!-- Character Sheet -->
-            <div class="character-sheet" id="characterSheet"></div>
-            
-            <!-- Streaks Leaderboard -->
-            <div style="margin-bottom: 30px;">
-                <h2 style="font-size: 1.3rem; margin-bottom: 15px; color: var(--accent);">🏆 Streaks Leaderboard</h2>
-                <div id="streaksLeaderboard"></div>
-            </div>
-            
+        <!-- BADGES VIEW -->
+        <div id="badgesView" class="section" style="display:none;">
             <!-- Achievement Badges -->
-            <div>
-                <h2 style="font-size: 1.3rem; margin-bottom: 15px; color: var(--accent);">🏅 Achievement Badges</h2>
+            <div style="margin-bottom: 30px;">
+                <h2 style="font-size: 1.5rem; margin-bottom: 10px; color: var(--accent);">🏅 Your Achievements</h2>
+                <p style="color: var(--text-dim); margin-bottom: 20px; font-size: 0.9rem;">Unlock badges by hitting milestones!</p>
                 <div class="badge-grid" id="badgeGrid"></div>
             </div>
-        </div>
-        
-        <!-- HISTORY VIEW -->
-        <div id="historyView" class="section">
-            <h2 style="margin-bottom: 20px;">Last 30 Days</h2>
-            <div class="calendar-grid" id="calendarGrid"></div>
-            <div class="legend">
-                <div class="legend-item">
-                    <div class="legend-box" style="background: var(--accent);"></div>
-                    <span>All goals</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-box" style="background: var(--orange);"></div>
-                    <span>Some goals</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-box" style="background: rgba(255,71,87,0.3);"></div>
-                    <span>No goals</span>
-                </div>
+            
+            <!-- Streaks Leaderboard -->
+            <div>
+                <h2 style="font-size: 1.5rem; margin-bottom: 10px; color: var(--accent);">🏆 Top Streaks</h2>
+                <p style="color: var(--text-dim); margin-bottom: 20px; font-size: 0.9rem;">Your habits ranked by current streak</p>
+                <div id="streaksLeaderboard"></div>
             </div>
         </div>
         
@@ -2760,22 +2735,12 @@
             event.target.value = '';
         }
         
-        // QUEST MODE FUNCTIONS
+        // BADGES & ACHIEVEMENTS
+        
         function updateProgress() {
             userProgress.totalDaysTracked = Object.keys(data).length;
-            userProgress.xp = Object.values(data).flat().filter(Boolean).length;
-            userProgress.level = Math.floor(userProgress.xp / 50) + 1;
             userProgress.longestStreak = Math.max(...goals.map((_, idx) => calculateBestStreak(idx)), 0);
             userProgress.perfectDays = Object.values(data).filter(day => day.every(Boolean) && day.length === goals.length).length;
-            userProgress.stats.discipline = Math.min(userProgress.longestStreak, 100);
-            userProgress.stats.balance = Math.min(userProgress.perfectDays * 2, 100);
-            
-            if (userProgress.totalDaysTracked >= 100) userProgress.currentChapter = 5;
-            else if (userProgress.totalDaysTracked >= 60) userProgress.currentChapter = 4;
-            else if (userProgress.totalDaysTracked >= 30) userProgress.currentChapter = 3;
-            else if (userProgress.totalDaysTracked >= 14) userProgress.currentChapter = 2;
-            else userProgress.currentChapter = 1;
-            
             saveData();
             checkBadges();
         }
@@ -2784,13 +2749,26 @@
             if (userProgress.longestStreak >= 7 && !userProgress.badges.includes('week_warrior')) unlockBadge('week_warrior');
             if (userProgress.longestStreak >= 14 && !userProgress.badges.includes('fortnight_champion')) unlockBadge('fortnight_champion');
             if (userProgress.longestStreak >= 30 && !userProgress.badges.includes('month_master')) unlockBadge('month_master');
+            if (userProgress.longestStreak >= 60 && !userProgress.badges.includes('unstoppable')) unlockBadge('unstoppable');
+            if (userProgress.longestStreak >= 100 && !userProgress.badges.includes('legendary')) unlockBadge('legendary');
             if (userProgress.perfectDays >= 1 && !userProgress.badges.includes('perfect_day')) unlockBadge('perfect_day');
+            if (userProgress.perfectDays >= 7 && !userProgress.badges.includes('perfect_week')) unlockBadge('perfect_week');
+            if (userProgress.perfectDays >= 30 && !userProgress.badges.includes('overachiever')) unlockBadge('overachiever');
         }
         
         function unlockBadge(badgeId) {
             userProgress.badges.push(badgeId);
             saveData();
+            showBadgeNotification(badges[badgeId]);
             createConfetti();
+        }
+        
+        function showBadgeNotification(badge) {
+            const notification = document.createElement('div');
+            notification.className = 'level-up-notification';
+            notification.innerHTML = `${badge.icon} ${badge.name} Unlocked!`;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
         }
         
         function createConfetti() {
@@ -2807,33 +2785,22 @@
             }
         }
         
-        function renderQuest() {
-            const chapter = storyChapters[userProgress.currentChapter];
-            document.getElementById('storyCard').innerHTML = `
-                <div class="story-chapter">Chapter ${userProgress.currentChapter}</div>
-                <div class="story-title">${chapter.title}</div>
-                <div class="story-text">"${chapter.story}"</div>
-            `;
+        function renderBadges() {
+            updateProgress();
             
-            document.getElementById('characterSheet').innerHTML = `
-                <div class="character-title">HERO THE ${userProgress.level >= 5 ? 'DETERMINED' : 'ASPIRING'}</div>
-                <div class="character-level">Level ${userProgress.level} • ${userProgress.xp} XP</div>
-                <div class="stat-bar">
-                    <div class="stat-label"><span>⚔️ Discipline</span><span>${userProgress.stats.discipline}</span></div>
-                    <div class="stat-bar-container"><div class="stat-bar-fill discipline" style="width: ${userProgress.stats.discipline}%"></div></div>
-                </div>
-            `;
-            
-            const streaks = goals.map((goal, idx) => ({ goal, streak: calculateStreak(idx) })).sort((a, b) => b.streak - a.streak).slice(0, 5);
-            document.getElementById('streaksLeaderboard').innerHTML = streaks.map((item, i) => `
-                <div class="leaderboard-item ${i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : ''}">
-                    <div class="leaderboard-rank">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1)}</div>
-                    <div class="leaderboard-info">
-                        <div class="leaderboard-goal">${item.goal}</div>
-                        <div class="leaderboard-streak">🔥 ${item.streak} day streak</div>
+            document.getElementById('streaksLeaderboard').innerHTML = goals
+                .map((goal, idx) => ({ goal, streak: calculateStreak(idx) }))
+                .sort((a, b) => b.streak - a.streak)
+                .slice(0, 5)
+                .map((item, i) => `
+                    <div class="leaderboard-item ${i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : ''}">
+                        <div class="leaderboard-rank">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1)}</div>
+                        <div class="leaderboard-info">
+                            <div class="leaderboard-goal">${item.goal}</div>
+                            <div class="leaderboard-streak">🔥 ${item.streak} day streak</div>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
             
             document.getElementById('badgeGrid').innerHTML = Object.values(badges).map(badge => `
                 <div class="badge-item ${userProgress.badges.includes(badge.id) ? 'unlocked' : 'locked'}">
@@ -2851,9 +2818,8 @@
             event.target.classList.add('active');
             
             if (view === 'stats') renderStats();
-            if (view === 'history') renderHistory();
             if (view === 'settings') renderSettings();
-            if (view === 'quest') { updateProgress(); renderQuest(); }
+            if (view === 'badges') renderBadges();
         }
         
         // Initialize
