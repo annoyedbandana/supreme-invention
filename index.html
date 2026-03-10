@@ -908,6 +908,391 @@
             animation: levelUp 0.6s ease-out;
         }
         
+        /* Experiments/Projects */
+        .experiment-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--accent);
+            transition: all 0.3s;
+        }
+        
+        .experiment-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .experiment-card.warning {
+            border-left-color: #ff9a76;
+        }
+        
+        .experiment-card.alert {
+            border-left-color: #ff6b9d;
+        }
+        
+        .experiment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .experiment-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+            flex: 1;
+        }
+        
+        .experiment-category {
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 12px;
+            background: var(--bg);
+            color: var(--text-dim);
+            margin-left: 10px;
+        }
+        
+        .experiment-meta {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 12px;
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            flex-wrap: wrap;
+        }
+        
+        .experiment-progress-container {
+            margin: 15px 0;
+        }
+        
+        .experiment-progress-bar {
+            background: var(--bg);
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+        
+        .experiment-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--lilac));
+            transition: width 0.5s ease;
+            border-radius: 6px;
+        }
+        
+        .experiment-progress-text {
+            font-size: 0.85rem;
+            color: var(--text);
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .experiment-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .experiment-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .experiment-btn.primary {
+            background: var(--accent);
+            color: white;
+        }
+        
+        .experiment-btn.secondary {
+            background: var(--bg);
+            color: var(--text);
+        }
+        
+        .experiment-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .milestone-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--bg);
+        }
+        
+        .milestone-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .milestone-text {
+            flex: 1;
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+        
+        .milestone-text.completed {
+            text-decoration: line-through;
+            color: var(--text-dim);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 2px solid var(--lavender);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+        
+        .form-select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 2px solid var(--lavender);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+        
+        .archived-experiment {
+            opacity: 0.7;
+            background: var(--bg);
+        }
+        
+        /* Task Entry Styles */
+        .task-entry {
+            background: var(--surface);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 3px solid var(--accent);
+        }
+        
+        .task-entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .remove-task-btn {
+            background: var(--red);
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+        
+        /* Project Progress Cards */
+        .project-progress-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--accent);
+            transition: all 0.3s;
+        }
+        
+        .project-progress-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .project-progress-card.warning {
+            border-left-color: #ff9a76;
+        }
+        
+        .project-progress-card.alert {
+            border-left-color: #ff6b9d;
+        }
+        
+        .project-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        
+        .project-card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+            flex: 1;
+        }
+        
+        .project-card-category {
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 12px;
+            background: var(--bg);
+            color: var(--text-dim);
+            margin-left: 10px;
+        }
+        
+        .project-quick-stats {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 12px;
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            flex-wrap: wrap;
+        }
+        
+        .projects-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .summary-stat {
+            background: var(--bg);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .summary-stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+        
+        .summary-stat-label {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+        }
+        
+        /* Weekly Frequency Goals */
+        .frequency-goal-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-left: 4px solid;
+        }
+        
+        .frequency-goal-card.on-track {
+            border-left-color: #7cc97f;
+        }
+        
+        .frequency-goal-card.exceeded {
+            border-left-color: #6bb6ff;
+        }
+        
+        .frequency-goal-card.behind {
+            border-left-color: #ff9a76;
+        }
+        
+        .frequency-goal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .frequency-goal-name {
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+        
+        .frequency-count {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
+        .frequency-progress-bar {
+            background: var(--bg);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+        
+        .frequency-progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .frequency-progress-fill.exceeded {
+            background: linear-gradient(90deg, #6bb6ff, #4a9eff);
+        }
+        
+        .frequency-progress-fill.on-track {
+            background: linear-gradient(90deg, #7cc97f, #6bba70);
+        }
+        
+        .frequency-progress-fill.behind {
+            background: linear-gradient(90deg, #ff9a76, #ff8566);
+        }
+        
+        .frequency-status {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+        
         /* Theme selector */
         .theme-selector {
             display: grid;
@@ -1033,9 +1418,11 @@
         
         <div class="view-switcher">
             <button class="view-btn active" onclick="switchView('today')">Today</button>
+            <button class="view-btn" onclick="switchView('log')">📝 Log</button>
+            <button class="view-btn" onclick="switchView('experiments')">🧪 Projects</button>
             <button class="view-btn" onclick="switchView('stats')">Stats</button>
-            <button class="view-btn" onclick="switchView('badges')">🏅 Badges</button>
-            <button class="view-btn" onclick="switchView('settings')">Settings</button>
+            <button class="view-btn" onclick="switchView('badges')">🏅</button>
+            <button class="view-btn" onclick="switchView('settings')">⚙️</button>
         </div>
         
         <!-- TODAY VIEW -->
@@ -1050,6 +1437,194 @@
             </div>
             <div class="date-display" id="dateDisplay"></div>
             <div class="goals-list" id="goalsList"></div>
+        </div>
+        
+        <!-- DAILY LOG VIEW -->
+        <div id="logView" class="section" style="display:none;">
+            <h2 style="font-size: 1.5rem; margin-bottom: 10px; color: var(--accent);">📝 Daily Log</h2>
+            <p style="color: var(--text-dim); margin-bottom: 20px; font-size: 0.9rem;">Track patterns behind your focus and energy</p>
+            
+            <!-- Quick Access Buttons -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 25px;">
+                <button class="experiment-btn primary" onclick="openMorningLog()">☀️ Morning Check-In</button>
+                <button class="experiment-btn primary" onclick="openEveningLog()">🌙 Evening Check-In</button>
+            </div>
+            
+            <!-- Today's Log Summary -->
+            <div id="logSummary" style="margin-bottom: 25px;"></div>
+            
+            <!-- Quick Dysregulation Log -->
+            <div style="background: var(--surface); padding: 20px; border-radius: 16px; margin-bottom: 25px;">
+                <h3 style="margin-bottom: 15px;">⚡ Quick Dysregulation Log</h3>
+                <button class="experiment-btn secondary" onclick="openDysregulationLog()" style="width: 100%;">+ Log Episode</button>
+            </div>
+            
+            <!-- ADHD Documents -->
+            <div style="background: var(--surface); padding: 20px; border-radius: 16px;">
+                <h3 style="margin-bottom: 15px;">📚 Your ADHD Toolkit</h3>
+                <div style="display: grid; gap: 10px;">
+                    <button class="experiment-btn secondary" onclick="viewDocument('rsd')">RSD Trigger Map</button>
+                    <button class="experiment-btn secondary" onclick="viewDocument('regulation')">Regulation Menu</button>
+                    <button class="experiment-btn secondary" onclick="viewDocument('evidence')">Evidence Base</button>
+                    <button class="experiment-btn secondary" onclick="viewDocument('launch')">Launch Sequence</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Morning Log Modal -->
+        <div id="morningLogModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-title">☀️ Morning Check-In</div>
+                <div class="form-group">
+                    <label class="form-label">Sleep Time</label>
+                    <input type="time" id="sleepTime" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Wake Time</label>
+                    <input type="time" id="wakeTime" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Sleep Quality (1-10)</label>
+                    <input type="range" id="sleepQuality" min="1" max="10" value="5" class="form-input"
+                           oninput="document.getElementById('sleepQualityVal').textContent = this.value">
+                    <div id="sleepQualityVal" style="text-align:center;color:var(--accent);font-size:1.2rem;">5</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Morning Energy - 30min after waking (1-10)</label>
+                    <input type="range" id="morningEnergy" min="1" max="10" value="5" class="form-input"
+                           oninput="document.getElementById('morningEnergyVal').textContent = this.value">
+                    <div id="morningEnergyVal" style="text-align:center;color:var(--accent);font-size:1.2rem;">5</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">3 Intentions for Today</label>
+                    <input type="text" id="intention1" class="form-input" placeholder="Intention 1" style="margin-bottom: 8px;">
+                    <input type="text" id="intention2" class="form-input" placeholder="Intention 2" style="margin-bottom: 8px;">
+                    <input type="text" id="intention3" class="form-input" placeholder="Intention 3">
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 25px;">
+                    <button class="experiment-btn secondary" style="flex: 1;" onclick="closeMorningLog()">Cancel</button>
+                    <button class="experiment-btn primary" style="flex: 1;" onclick="saveMorningLog()">Save</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Evening Log Modal -->
+        <div id="eveningLogModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-title">🌙 Evening Check-In</div>
+                
+                <!-- Task Entries (can add multiple) -->
+                <div id="taskEntries">
+                    <div class="form-group" style="background: var(--bg); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+                        <h4 style="margin-bottom: 10px; font-size: 1rem;">📋 Tasks Done Today</h4>
+                        <div id="tasksContainer"></div>
+                        <button type="button" class="experiment-btn secondary" onclick="addTaskEntry()" style="width: 100%; margin-top: 10px;">+ Add Another Task</button>
+                    </div>
+                </div>
+                
+                <!-- Exercise (linked to habits) -->
+                <div class="form-group" style="background: var(--bg); padding: 15px; border-radius: 12px;">
+                    <h4 style="margin-bottom: 10px; font-size: 1rem;">💪 Exercise</h4>
+                    <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 10px;">Auto-populated from your habits tracker</p>
+                    <div id="exerciseFromHabits" style="margin-bottom: 10px; font-size: 0.9rem;"></div>
+                    <label class="form-label">Post-Exercise Focus/Mood (1-10)</label>
+                    <input type="range" id="postExerciseFocus" min="1" max="10" value="5" class="form-input"
+                           oninput="document.getElementById('focusVal').textContent = this.value">
+                    <div id="focusVal" style="text-align:center;color:var(--accent);font-size:1.2rem;">5</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Emotional Episode Today?</label>
+                    <select id="emotionalEpisode" class="form-select" onchange="toggleEmotionalTrigger()">
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
+                    </select>
+                    <input type="text" id="emotionalTrigger" class="form-input" placeholder="Brief trigger note" style="margin-top:10px;display:none;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Skipped Meals or Poor Eating?</label>
+                    <select id="skippedMeals" class="form-select">
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Overall Day Rating (1-10)</label>
+                    <input type="range" id="dayRating" min="1" max="10" value="5" class="form-input"
+                           oninput="document.getElementById('dayRatingVal').textContent = this.value">
+                    <div id="dayRatingVal" style="text-align:center;color:var(--accent);font-size:1.2rem;">5</div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 25px;">
+                    <button class="experiment-btn secondary" style="flex: 1;" onclick="closeEveningLog()">Cancel</button>
+                    <button class="experiment-btn primary" style="flex: 1;" onclick="saveEveningLog()">Save</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- EXPERIMENTS VIEW -->
+        <div id="experimentsView" class="section" style="display:none;">
+            <div style="margin-bottom: 25px;">
+                <h2 style="font-size: 1.5rem; margin-bottom: 10px; color: var(--accent);">🧪 Active Projects</h2>
+                <p style="color: var(--text-dim); margin-bottom: 20px; font-size: 0.9rem;">Track your experiments and long-term goals</p>
+                <div id="activeExperiments"></div>
+                <button class="add-goal-btn" onclick="openNewExperimentModal()" style="width: 100%; margin-top: 15px;">+ New Project</button>
+            </div>
+            
+            <div id="completedSection" style="display:none;">
+                <h3 style="font-size: 1.2rem; margin-bottom: 15px; color: var(--text); padding-top: 20px; border-top: 2px solid var(--bg);">✅ Completed</h3>
+                <div id="completedExperiments"></div>
+            </div>
+        </div>
+        
+        <!-- Modals -->
+        <div id="experimentModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-title">Create New Project</div>
+                <div class="form-group">
+                    <label class="form-label">Project Title *</label>
+                    <input type="text" id="expTitle" class="form-input" placeholder="e.g., Read War & Peace">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select id="expCategory" class="form-select">
+                        <option value="learning">📚 Learning</option>
+                        <option value="career">💼 Career</option>
+                        <option value="creative">🎨 Creative</option>
+                        <option value="writing">📝 Writing</option>
+                        <option value="fitness">🏃 Fitness</option>
+                        <option value="other">✨ Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Progress Type *</label>
+                    <select id="expProgressType" class="form-select" onchange="toggleProgressFields()">
+                        <option value="manual">Manual % (I'll update as I go)</option>
+                        <option value="count">Count-based (e.g., 12/52 books)</option>
+                        <option value="milestones">Milestones (break into steps)</option>
+                    </select>
+                </div>
+                <div id="countFields" style="display:none;">
+                    <div class="form-group">
+                        <label class="form-label">Target Count</label>
+                        <input type="number" id="expTargetCount" class="form-input" placeholder="e.g., 52">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Deadline (optional)</label>
+                    <input type="date" id="expDeadline" class="form-input">
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 25px;">
+                    <button class="experiment-btn secondary" style="flex: 1;" onclick="closeExperimentModal()">Cancel</button>
+                    <button class="experiment-btn primary" style="flex: 1;" onclick="createExperiment()">Create</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="checkInModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-title" id="checkInTitle"></div>
+                <div id="checkInContent"></div>
+            </div>
         </div>
         
         <!-- STATS VIEW -->
@@ -1075,13 +1650,18 @@
                     </div>
                 </div>
                 
-                <!-- Option B: Overall Score -->
+                <!-- Weekly Frequency Goals -->
                 <div class="chart-box">
-                    <h3>📊 Overall Consistency Score</h3>
-                    <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px;">Your total completion rate</p>
-                    <div style="display: flex; justify-content: center; padding: 20px;">
-                        <canvas id="overallScoreChart" width="250" height="250"></canvas>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h3 style="margin: 0;">📊 Weekly Frequency Goals</h3>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <button onclick="changeWeek(-1)" style="background: var(--surface-hover); border: 1px solid var(--lavender); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">◀</button>
+                            <span id="currentWeekLabel" style="font-size: 0.85rem; color: var(--text-dim); min-width: 120px; text-align: center;"></span>
+                            <button onclick="changeWeek(1)" id="nextWeekBtn" style="background: var(--surface-hover); border: 1px solid var(--lavender); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">▶</button>
+                        </div>
                     </div>
+                    <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px;">Track your weekly targets</p>
+                    <div id="weeklyGoalsWidget"></div>
                 </div>
                 
                 <!-- Option C: Goal Balance -->
@@ -1094,12 +1674,10 @@
                 </div>
             </div>
             
-            <div class="charts-container">
-                <div class="chart-box">
-                    <h3>🌊 Consistency Heatwave</h3>
-                    <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 15px;">Last 30 days - darker = more goals completed</p>
-                    <canvas id="heatwaveChart"></canvas>
-                </div>
+            <!-- Projects Progress Section -->
+            <div style="margin-bottom: 30px;">
+                <h2 style="font-size: 1.5rem; margin-bottom: 15px; color: var(--accent);">🧪 Active Projects</h2>
+                <div id="projectsProgressWidget"></div>
             </div>
             
             <div class="goal-stats" id="goalStats"></div>
@@ -1198,11 +1776,27 @@
             { id: 'other', name: '✨ Other', color: '#c4a4a4' }
         ];
         
+        /*
+        goalMetadata structure per goal index:
+        {
+            category: "physical",
+            startDate: "2026-03-01",
+            endDate: "2026-06-01" (optional),
+            frequencyEnabled: true/false,
+            frequencyTarget: 3,  // number of times
+            frequencyPeriod: "week" or "month",
+            linkedProjectId: 12345 (optional)
+        }
+        */
+        
         // Current theme
         let currentTheme = localStorage.getItem('currentTheme') || 'lavender';
         
         // Current font
         let currentFont = localStorage.getItem('currentFont') || 'default';
+        
+        // Current week offset for weekly goals navigation (0 = this week, -1 = last week, etc.)
+        let currentWeekOffset = 0;
         
         // User progress data
         let userProgress = JSON.parse(localStorage.getItem('userProgress')) || {
@@ -1219,6 +1813,52 @@
             longestStreak: 0,
             perfectDays: 0,
             comebacks: 0
+        };
+        
+        // Experiments/Projects data
+        let experiments = JSON.parse(localStorage.getItem('experiments')) || [];
+        
+        // Daily Log data for ADHD tracking
+        let dailyLogs = JSON.parse(localStorage.getItem('dailyLogs')) || {};
+        /*
+        dailyLogs structure:
+        {
+            "2026-03-10": {
+                morning: {
+                    sleepTime: "23:00",
+                    wakeTime: "07:00",
+                    sleepQuality: 7,
+                    morningEnergy: 6,
+                    intentions: ["Finish Chapter 1", "Exercise", "Call Mom"]
+                },
+                evening: {
+                    initiationDifficulty: 5,
+                    launchSequence: ["coffee", "walk", "shower"],
+                    exercise: { type: "Running", duration: 30, intensity: 7 },
+                    postExerciseFocus: 8,
+                    emotionalEpisode: false,
+                    emotionalTrigger: "",
+                    skippedMeals: false,
+                    dayRating: 7
+                },
+                dysregulation: [] // array of episodes
+            }
+        }
+        */
+        
+        // Energy tracking (for 2-week mapping)
+        let energyTracking = JSON.parse(localStorage.getItem('energyTracking')) || {
+            enabled: false,
+            startDate: null,
+            logs: {} // date: { morning: 5, midday: 7, afternoon: 6 }
+        };
+        
+        // Ongoing documents
+        let adhdDocuments = JSON.parse(localStorage.getItem('adhdDocuments')) || {
+            rsdTriggers: [],
+            regulationMenu: [],
+            evidenceBase: [],
+            launchSequence: []
         };
         
         // Achievement Badges
@@ -1500,6 +2140,10 @@
             localStorage.setItem('currentTheme', currentTheme);
             localStorage.setItem('currentFont', currentFont);
             localStorage.setItem('userProgress', JSON.stringify(userProgress));
+            localStorage.setItem('experiments', JSON.stringify(experiments));
+            localStorage.setItem('dailyLogs', JSON.stringify(dailyLogs));
+            localStorage.setItem('energyTracking', JSON.stringify(energyTracking));
+            localStorage.setItem('adhdDocuments', JSON.stringify(adhdDocuments));
         }
         
         // Apply theme
@@ -1918,19 +2562,179 @@
             });
         }
         
+        // Change week for Weekly Frequency Goals
+        function changeWeek(offset) {
+            currentWeekOffset += offset;
+            renderWeeklyFrequencyGoals();
+        }
+        
+        // Render Weekly Frequency Goals
+        function renderWeeklyFrequencyGoals() {
+            const widget = document.getElementById('weeklyGoalsWidget');
+            
+            // Get week range based on offset
+            const today = new Date();
+            today.setDate(today.getDate() + (currentWeekOffset * 7));
+            const dayOfWeek = today.getDay();
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - dayOfWeek);
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6);
+            
+            const weekLabel = `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+            
+            // Update week label and button states
+            const weekLabelEl = document.getElementById('currentWeekLabel');
+            const nextWeekBtn = document.getElementById('nextWeekBtn');
+            if (weekLabelEl) {
+                weekLabelEl.textContent = currentWeekOffset === 0 ? 'This Week' : weekLabel;
+            }
+            if (nextWeekBtn) {
+                nextWeekBtn.disabled = currentWeekOffset >= 0;
+                nextWeekBtn.style.opacity = currentWeekOffset >= 0 ? '0.5' : '1';
+                nextWeekBtn.style.cursor = currentWeekOffset >= 0 ? 'not-allowed' : 'pointer';
+            }
+            
+            // Filter goals with frequency enabled
+            const frequencyGoals = goals.map((goal, index) => {
+                const metadata = goalMetadata[index] || {};
+                if (!metadata.frequencyEnabled) return null;
+                
+                // Count completions this week
+                let count = 0;
+                for (let d = new Date(startOfWeek); d <= endOfWeek; d.setDate(d.getDate() + 1)) {
+                    const dateKey = d.toISOString().split('T')[0];
+                    if (data[dateKey] && data[dateKey][index]) count++;
+                }
+                
+                const target = metadata.frequencyTarget || 3;
+                const progress = (count / target) * 100;
+                const status = count >= target ? 'exceeded' : count >= target * 0.8 ? 'on-track' : 'behind';
+                const statusText = count >= target ? '✅ Target met!' : 
+                                  count >= target * 0.8 ? '✓ On track' :
+                                  `⚠️ Need ${target - count} more`;
+                
+                return { goal, index, count, target, progress: Math.min(progress, 100), status, statusText };
+            }).filter(Boolean);
+            
+            if (frequencyGoals.length === 0) {
+                widget.innerHTML = '<p style="text-align:center;color:var(--text-dim);padding:20px;">No frequency goals set. Enable them in Settings!</p>';
+                return;
+            }
+            
+            widget.innerHTML = `
+                <div style="font-size:0.85rem;color:var(--text-dim);margin-bottom:15px;">
+                    ${weekLabel}
+                </div>
+                ${frequencyGoals.map(g => `
+                    <div class="frequency-goal-card ${g.status}">
+                        <div class="frequency-goal-header">
+                            <div class="frequency-goal-name">${g.goal}</div>
+                            <div class="frequency-count">${g.count}/${g.target}</div>
+                        </div>
+                        <div class="frequency-progress-bar">
+                            <div class="frequency-progress-fill ${g.status}" style="width: ${g.progress}%"></div>
+                        </div>
+                        <div class="frequency-status">${g.statusText}</div>
+                    </div>
+                `).join('')}
+            `;
+        }
+        
+        // Render Projects Progress Widget
+        function renderProjectsProgress() {
+            const widget = document.getElementById('projectsProgressWidget');
+            if (!widget) return;
+            
+            const activeProjects = experiments.filter(e => !e.completed);
+            const today = getTodayKey();
+            
+            // Check which projects were worked on today
+            const workedOnToday = activeProjects.filter(exp => {
+                const lastCheckIn = exp.checkIns.length > 0 ? exp.checkIns[exp.checkIns.length - 1].date : exp.startDate;
+                return lastCheckIn === today;
+            }).length;
+            
+            if (activeProjects.length === 0) {
+                widget.innerHTML = '<p style="text-align:center;color:var(--text-dim);padding:40px 0;">No active projects yet. Create one in the Projects tab!</p>';
+                return;
+            }
+            
+            // Quick stats
+            let html = '<div class="projects-summary">';
+            html += `
+                <div class="summary-stat">
+                    <div class="summary-stat-value">${activeProjects.length}</div>
+                    <div class="summary-stat-label">Active Projects</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="summary-stat-value">${workedOnToday}</div>
+                    <div class="summary-stat-label">Worked on Today</div>
+                </div>
+            `;
+            html += '</div>';
+            
+            // Project cards
+            activeProjects.forEach(exp => {
+                const lastCheckIn = exp.checkIns.length > 0 ? exp.checkIns[exp.checkIns.length - 1].date : exp.startDate;
+                const daysSinceUpdate = Math.floor((new Date() - new Date(lastCheckIn)) / (1000 * 60 * 60 * 24));
+                
+                let warningClass = '';
+                let updateText = daysSinceUpdate === 0 ? '✅ Updated today' :
+                                daysSinceUpdate === 1 ? 'Updated yesterday' :
+                                `${daysSinceUpdate} days ago`;
+                
+                if (daysSinceUpdate >= 14) { warningClass = 'alert'; updateText = '⚠️ ' + updateText; }
+                else if (daysSinceUpdate >= 7) { warningClass = 'warning'; updateText = '⚠️ ' + updateText; }
+                
+                const categoryEmoji = { learning: '📚', career: '💼', creative: '🎨', writing: '📝', fitness: '🏃', other: '✨' };
+                
+                let progressDisplay = '';
+                if (exp.progressType === 'count') {
+                    progressDisplay = `${exp.currentCount}/${exp.targetCount}`;
+                } else if (exp.progressType === 'milestones') {
+                    const completed = exp.milestones.filter(m => m.completed).length;
+                    progressDisplay = `${completed}/${exp.milestones.length} milestones`;
+                } else {
+                    progressDisplay = `${Math.round(exp.progress)}%`;
+                }
+                
+                html += `
+                    <div class="project-progress-card ${warningClass}">
+                        <div class="project-card-header">
+                            <div class="project-card-title">${exp.title}</div>
+                            <div class="project-card-category">${categoryEmoji[exp.category]}</div>
+                        </div>
+                        <div class="project-quick-stats">
+                            <span>Progress: ${progressDisplay}</span>
+                            <span>•</span>
+                            <span>${updateText}</span>
+                        </div>
+                        <div class="experiment-progress-container">
+                            <div class="experiment-progress-bar">
+                                <div class="experiment-progress-fill" style="width: ${exp.progress}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            widget.innerHTML = html;
+        }
+        
         // Render Stats view
         function renderStats() {
             // Render category and goal filter checkboxes
             renderCategoryFilter();
             renderGoalFilter();
             
-            // Render the three donut charts
+            // Render charts
             renderMultiRingChart();
-            renderOverallScoreChart();
+            renderWeeklyFrequencyGoals();
             renderGoalBalanceChart();
             
-            // Render the single creative chart
-            renderHeatwaveChart();
+            // Render projects progress
+            renderProjectsProgress();
             
             const goalStats = document.getElementById('goalStats');
             goalStats.innerHTML = '';
@@ -2579,6 +3383,26 @@
                         </select>
                     </div>
                     <div class="goal-setting-row">
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem;">
+                            <input type="checkbox" ${metadata.frequencyEnabled ? 'checked' : ''} 
+                                   onchange="toggleFrequency(${index}, this.checked)">
+                            <span>Set weekly/monthly target</span>
+                        </label>
+                    </div>
+                    ${metadata.frequencyEnabled ? `
+                        <div class="goal-setting-row" style="gap: 8px;">
+                            <input type="number" class="start-date-input" style="width: 60px;" 
+                                   value="${metadata.frequencyTarget || 3}" min="1" max="31"
+                                   onchange="updateFrequencyTarget(${index}, this.value)">
+                            <span style="font-size: 0.9rem;">times per</span>
+                            <select class="category-selector" style="width: auto;"
+                                    onchange="updateFrequencyPeriod(${index}, this.value)">
+                                <option value="week" ${metadata.frequencyPeriod === 'week' ? 'selected' : ''}>Week</option>
+                                <option value="month" ${metadata.frequencyPeriod === 'month' ? 'selected' : ''}>Month</option>
+                            </select>
+                        </div>
+                    ` : ''}
+                    <div class="goal-setting-row">
                         <span class="start-date-label">Start date:</span>
                         <input 
                             type="date" 
@@ -2609,6 +3433,32 @@
             goalMetadata[index].category = category;
             saveData();
             renderToday(); // Refresh to show in new category
+        }
+        
+        // Toggle frequency tracking
+        function toggleFrequency(index, enabled) {
+            if (!goalMetadata[index]) {
+                goalMetadata[index] = {};
+            }
+            goalMetadata[index].frequencyEnabled = enabled;
+            if (enabled && !goalMetadata[index].frequencyTarget) {
+                goalMetadata[index].frequencyTarget = 3;
+                goalMetadata[index].frequencyPeriod = 'week';
+            }
+            saveData();
+            renderSettings();
+        }
+        
+        function updateFrequencyTarget(index, target) {
+            if (!goalMetadata[index]) goalMetadata[index] = {};
+            goalMetadata[index].frequencyTarget = parseInt(target);
+            saveData();
+        }
+        
+        function updateFrequencyPeriod(index, period) {
+            if (!goalMetadata[index]) goalMetadata[index] = {};
+            goalMetadata[index].frequencyPeriod = period;
+            saveData();
         }
         
         // Update goal start date
@@ -2820,6 +3670,486 @@
             if (view === 'stats') renderStats();
             if (view === 'settings') renderSettings();
             if (view === 'badges') renderBadges();
+            if (view === 'experiments') renderExperiments();
+            if (view === 'log') renderDailyLog();
+        }
+        
+        // DAILY LOG FUNCTIONS
+        function initDailyLog(date) {
+            if (!dailyLogs[date]) {
+                dailyLogs[date] = {
+                    morning: null,
+                    evening: null,
+                    dysregulation: []
+                };
+            }
+        }
+        
+        function renderDailyLog() {
+            const today = getTodayKey();
+            initDailyLog(today);
+            const log = dailyLogs[today];
+            
+            let summary = '<div style="background:var(--surface);padding:20px;border-radius:16px;">';
+            summary += '<h3 style="margin-bottom:15px;">Today\'s Summary</h3>';
+            
+            if (log.morning) {
+                summary += `<p style="margin:8px 0;"><strong>☀️ Morning:</strong> Sleep ${log.morning.sleepQuality}/10, Energy ${log.morning.morningEnergy}/10</p>`;
+                summary += `<p style="margin:8px 0;color:var(--text-dim);font-size:0.85rem;">Intentions: ${log.morning.intentions.filter(i => i).join(', ') || 'None set'}</p>`;
+            } else {
+                summary += '<p style="color:var(--text-dim);">☀️ Morning check-in not completed</p>';
+            }
+            
+            if (log.evening) {
+                summary += `<p style="margin:8px 0;"><strong>🌙 Evening:</strong> Day Rating ${log.evening.dayRating}/10</p>`;
+                if (log.evening.tasks && log.evening.tasks.length > 0) {
+                    summary += '<div style="margin:10px 0;padding:10px;background:var(--bg);border-radius:8px;">';
+                    summary += '<strong style="font-size:0.9rem;">📋 Tasks Completed:</strong>';
+                    log.evening.tasks.forEach(task => {
+                        summary += `<div style="margin:8px 0;padding:8px;background:var(--surface);border-radius:6px;">`;
+                        summary += `<div style="font-weight:600;">${task.name}</div>`;
+                        summary += `<div style="font-size:0.85rem;color:var(--text-dim);">Initiation: ${task.initiation}/10`;
+                        if (task.sequences && task.sequences.length > 0) {
+                            summary += ` • Sequence: ${task.sequences.join(', ')}`;
+                        }
+                        summary += `</div></div>`;
+                    });
+                    summary += '</div>';
+                }
+            } else {
+                summary += '<p style="color:var(--text-dim);">🌙 Evening check-in not completed</p>';
+            }
+            
+            if (log.dysregulation.length > 0) {
+                summary += `<p style="margin:8px 0;color:#ff6b9d;"><strong>⚡ ${log.dysregulation.length} dysregulation episode(s) logged</strong></p>`;
+            }
+            
+            summary += '</div>';
+            document.getElementById('logSummary').innerHTML = summary;
+        }
+        
+        function openMorningLog() {
+            const today = getTodayKey();
+            initDailyLog(today);
+            const morning = dailyLogs[today].morning;
+            
+            if (morning) {
+                document.getElementById('sleepTime').value = morning.sleepTime || '';
+                document.getElementById('wakeTime').value = morning.wakeTime || '';
+                document.getElementById('sleepQuality').value = morning.sleepQuality || 5;
+                document.getElementById('sleepQualityVal').textContent = morning.sleepQuality || 5;
+                document.getElementById('morningEnergy').value = morning.morningEnergy || 5;
+                document.getElementById('morningEnergyVal').textContent = morning.morningEnergy || 5;
+                document.getElementById('intention1').value = morning.intentions[0] || '';
+                document.getElementById('intention2').value = morning.intentions[1] || '';
+                document.getElementById('intention3').value = morning.intentions[2] || '';
+            }
+            
+            document.getElementById('morningLogModal').classList.add('active');
+        }
+        
+        function closeMorningLog() {
+            document.getElementById('morningLogModal').classList.remove('active');
+        }
+        
+        function saveMorningLog() {
+            const today = getTodayKey();
+            dailyLogs[today].morning = {
+                sleepTime: document.getElementById('sleepTime').value,
+                wakeTime: document.getElementById('wakeTime').value,
+                sleepQuality: parseInt(document.getElementById('sleepQuality').value),
+                morningEnergy: parseInt(document.getElementById('morningEnergy').value),
+                intentions: [
+                    document.getElementById('intention1').value,
+                    document.getElementById('intention2').value,
+                    document.getElementById('intention3').value
+                ]
+            };
+            saveData();
+            closeMorningLog();
+            renderDailyLog();
+            createGlitter(window.innerWidth / 2, window.innerHeight / 2);
+        }
+        
+        function openEveningLog() {
+            const today = getTodayKey();
+            initDailyLog(today);
+            const evening = dailyLogs[today].evening;
+            
+            // Initialize with one empty task entry
+            if (!evening || !evening.tasks || evening.tasks.length === 0) {
+                document.getElementById('tasksContainer').innerHTML = '';
+                addTaskEntry();
+            } else {
+                document.getElementById('tasksContainer').innerHTML = evening.tasks.map((task, idx) => 
+                    createTaskEntryHTML(idx, task)
+                ).join('');
+            }
+            
+            // Check which exercise habits were completed today
+            const exerciseHabits = goals
+                .map((goal, idx) => ({ goal, idx, category: goalMetadata[idx]?.category }))
+                .filter(item => item.category === 'physical');
+            
+            const completedExercise = exerciseHabits.filter(item => 
+                data[today] && data[today][item.idx]
+            );
+            
+            if (completedExercise.length > 0) {
+                document.getElementById('exerciseFromHabits').innerHTML = 
+                    '<div style="color:var(--accent);font-weight:600;">✅ Completed today:</div>' +
+                    completedExercise.map(item => 
+                        `<div style="padding:5px 0;">• ${item.goal}</div>`
+                    ).join('');
+            } else {
+                document.getElementById('exerciseFromHabits').innerHTML = 
+                    '<div style="color:var(--text-dim);">No physical habits completed today</div>';
+            }
+            
+            if (evening) {
+                document.getElementById('postExerciseFocus').value = evening.postExerciseFocus || 5;
+                document.getElementById('focusVal').textContent = evening.postExerciseFocus || 5;
+                document.getElementById('dayRating').value = evening.dayRating || 5;
+                document.getElementById('dayRatingVal').textContent = evening.dayRating || 5;
+            }
+            
+            document.getElementById('eveningLogModal').classList.add('active');
+        }
+        
+        function closeEveningLog() {
+            document.getElementById('eveningLogModal').classList.remove('active');
+        }
+        
+        function toggleEmotionalTrigger() {
+            const show = document.getElementById('emotionalEpisode').value === 'yes';
+            document.getElementById('emotionalTrigger').style.display = show ? 'block' : 'none';
+        }
+        
+        let taskEntryCount = 0;
+        
+        function createTaskEntryHTML(index, task = null) {
+            const sequences = adhdDocuments.launchSequence.length > 0 
+                ? adhdDocuments.launchSequence 
+                : ['Coffee', 'Shower', 'Walk', 'Music', 'Breakfast'];
+            
+            return `
+                <div class="task-entry" id="taskEntry${index}">
+                    <div class="task-entry-header">
+                        <strong>Task ${index + 1}</strong>
+                        ${index > 0 ? `<button type="button" class="remove-task-btn" onclick="removeTaskEntry(${index})">Remove</button>` : ''}
+                    </div>
+                    <input type="text" class="form-input" id="taskName${index}" placeholder="Task name" value="${task?.name || ''}" style="margin-bottom:10px;">
+                    <label style="font-size:0.85rem;display:block;margin-bottom:5px;">Initiation Difficulty (1-10)</label>
+                    <input type="range" id="taskInitiation${index}" min="1" max="10" value="${task?.initiation || 5}" class="form-input"
+                           oninput="document.getElementById('taskInitVal${index}').textContent = this.value">
+                    <div id="taskInitVal${index}" style="text-align:center;color:var(--accent);margin-bottom:10px;">${task?.initiation || 5}</div>
+                    <label style="font-size:0.85rem;display:block;margin-bottom:5px;">Launch Sequence Used</label>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+                        ${sequences.map((seq, idx) => `
+                            <label style="font-size:0.85rem;">
+                                <input type="checkbox" id="taskSeq${index}_${idx}" value="${seq}" ${task?.sequences?.includes(seq) ? 'checked' : ''}> ${seq}
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function addTaskEntry() {
+            const container = document.getElementById('tasksContainer');
+            container.innerHTML += createTaskEntryHTML(taskEntryCount);
+            taskEntryCount++;
+        }
+        
+        function removeTaskEntry(index) {
+            document.getElementById(`taskEntry${index}`).remove();
+        }
+        
+        function saveEveningLog() {
+            const today = getTodayKey();
+            
+            // Collect all task entries
+            const tasks = [];
+            document.querySelectorAll('.task-entry').forEach((entry, index) => {
+                const nameInput = entry.querySelector('[id^="taskName"]');
+                const initiationInput = entry.querySelector('[id^="taskInitiation"]');
+                const sequenceInputs = entry.querySelectorAll('[id^="taskSeq"]:checked');
+                
+                if (nameInput && nameInput.value.trim()) {
+                    tasks.push({
+                        name: nameInput.value.trim(),
+                        initiation: parseInt(initiationInput.value) || 5,
+                        sequences: Array.from(sequenceInputs).map(cb => cb.value)
+                    });
+                }
+            });
+            
+            dailyLogs[today].evening = {
+                tasks: tasks,
+                postExerciseFocus: parseInt(document.getElementById('postExerciseFocus').value),
+                emotionalEpisode: document.getElementById('emotionalEpisode').value === 'yes',
+                emotionalTrigger: document.getElementById('emotionalTrigger').value,
+                skippedMeals: document.getElementById('skippedMeals').value === 'yes',
+                dayRating: parseInt(document.getElementById('dayRating').value)
+            };
+            saveData();
+            closeEveningLog();
+            renderDailyLog();
+            createGlitter(window.innerWidth / 2, window.innerHeight / 2);
+        }
+        
+        function openDysregulationLog() {
+            const note = prompt('Quick dysregulation log:\n\nTrigger (what caused it):');
+            if (!note) return;
+            
+            const intensity = prompt('Intensity (1-10):');
+            const today = getTodayKey();
+            initDailyLog(today);
+            
+            dailyLogs[today].dysregulation.push({
+                time: new Date().toLocaleTimeString(),
+                trigger: note,
+                intensity: parseInt(intensity) || 5
+            });
+            
+            saveData();
+            renderDailyLog();
+        }
+        
+        function viewDocument(type) {
+            const docs = {
+                rsd: 'RSD Trigger Map',
+                regulation: 'Regulation Menu',
+                evidence: 'Evidence Base',
+                launch: 'Launch Sequence'
+            };
+            
+            alert(`${docs[type]}\n\nThis feature will show your ${docs[type].toLowerCase()} in a future update!\n\nFor now, use the Notes app or a document to track these.`);
+        }
+        
+        //
+        function openNewExperimentModal() {
+            document.getElementById('experimentModal').classList.add('active');
+        }
+        
+        function closeExperimentModal() {
+            document.getElementById('experimentModal').classList.remove('active');
+            document.getElementById('expTitle').value = '';
+            document.getElementById('expTargetCount').value = '';
+            document.getElementById('expDeadline').value = '';
+        }
+        
+        function toggleProgressFields() {
+            const type = document.getElementById('expProgressType').value;
+            document.getElementById('countFields').style.display = type === 'count' ? 'block' : 'none';
+        }
+        
+        function createExperiment() {
+            const title = document.getElementById('expTitle').value.trim();
+            if (!title) { alert('Please enter a title'); return; }
+            
+            const type = document.getElementById('expProgressType').value;
+            const exp = {
+                id: Date.now(),
+                title,
+                category: document.getElementById('expCategory').value,
+                startDate: getTodayKey(),
+                deadline: document.getElementById('expDeadline').value || null,
+                progressType: type,
+                progress: 0,
+                currentCount: 0,
+                targetCount: type === 'count' ? parseInt(document.getElementById('expTargetCount').value) || 10 : null,
+                milestones: [],
+                checkIns: [],
+                completed: false,
+                completedDate: null
+            };
+            
+            experiments.push(exp);
+            saveData();
+            closeExperimentModal();
+            renderExperiments();
+        }
+        
+        function renderExperiments() {
+            const active = experiments.filter(e => !e.completed);
+            const completed = experiments.filter(e => e.completed);
+            
+            document.getElementById('activeExperiments').innerHTML = active.length === 0 
+                ? '<p style="text-align:center;color:var(--text-dim);padding:40px 0;">No active projects yet. Create one to get started!</p>'
+                : active.map(exp => renderExperimentCard(exp)).join('');
+            
+            document.getElementById('completedSection').style.display = completed.length > 0 ? 'block' : 'none';
+            document.getElementById('completedExperiments').innerHTML = completed.map(exp => renderExperimentCard(exp, true)).join('');
+        }
+        
+        function renderExperimentCard(exp, isCompleted = false) {
+            const daysSinceStart = Math.floor((new Date() - new Date(exp.startDate)) / (1000 * 60 * 60 * 24));
+            const lastCheckIn = exp.checkIns.length > 0 ? exp.checkIns[exp.checkIns.length - 1].date : exp.startDate;
+            const daysSinceUpdate = Math.floor((new Date() - new Date(lastCheckIn)) / (1000 * 60 * 60 * 24));
+            
+            let warningClass = '';
+            let updateText = daysSinceUpdate === 0 ? 'Updated today' :
+                            daysSinceUpdate === 1 ? 'Updated yesterday' :
+                            `Last update: ${daysSinceUpdate} days ago`;
+            
+            if (!isCompleted) {
+                if (daysSinceUpdate >= 14) { warningClass = 'alert'; updateText = '⚠️ ' + updateText; }
+                else if (daysSinceUpdate >= 7) { warningClass = 'warning'; updateText = '⚠️ ' + updateText; }
+            }
+            
+            const categoryEmoji = { learning: '📚', career: '💼', creative: '🎨', writing: '📝', fitness: '🏃', other: '✨' };
+            
+            let progressDisplay = '';
+            if (exp.progressType === 'count') {
+                progressDisplay = `${exp.currentCount}/${exp.targetCount}`;
+                exp.progress = exp.targetCount > 0 ? (exp.currentCount / exp.targetCount * 100) : 0;
+            } else if (exp.progressType === 'milestones') {
+                const completed = exp.milestones.filter(m => m.completed).length;
+                progressDisplay = `${completed}/${exp.milestones.length} milestones`;
+                exp.progress = exp.milestones.length > 0 ? (completed / exp.milestones.length * 100) : 0;
+            } else {
+                progressDisplay = `${Math.round(exp.progress)}%`;
+            }
+            
+            const deadlineText = exp.deadline ? ` • Deadline: ${new Date(exp.deadline).toLocaleDateString()}` : '';
+            
+            return `
+                <div class="experiment-card ${warningClass} ${isCompleted ? 'archived-experiment' : ''}">
+                    <div class="experiment-header">
+                        <div class="experiment-title">${exp.title}</div>
+                        <div class="experiment-category">${categoryEmoji[exp.category]} ${exp.category}</div>
+                    </div>
+                    <div class="experiment-meta">
+                        <span>Started: ${daysSinceStart} days ago</span>
+                        <span>${updateText}</span>
+                        ${deadlineText}
+                    </div>
+                    <div class="experiment-progress-container">
+                        <div class="experiment-progress-text">
+                            <span>${progressDisplay}</span>
+                            <span>${Math.round(exp.progress)}%</span>
+                        </div>
+                        <div class="experiment-progress-bar">
+                            <div class="experiment-progress-fill" style="width: ${exp.progress}%"></div>
+                        </div>
+                    </div>
+                    ${!isCompleted ? `
+                        <div class="experiment-actions">
+                            <button class="experiment-btn primary" onclick="openCheckInModal(${exp.id})">Check In</button>
+                            <button class="experiment-btn secondary" onclick="viewExperimentDetails(${exp.id})">Details</button>
+                            <button class="experiment-btn secondary" onclick="markComplete(${exp.id})">✓ Complete</button>
+                        </div>
+                    ` : `
+                        <div style="margin-top:10px;color:var(--text-dim);font-size:0.85rem;">
+                            ✅ Completed ${new Date(exp.completedDate).toLocaleDateString()} • Took ${Math.floor((new Date(exp.completedDate) - new Date(exp.startDate)) / (1000 * 60 * 60 * 24))} days
+                        </div>
+                    `}
+                </div>
+            `;
+        }
+        
+        function openCheckInModal(expId) {
+            const exp = experiments.find(e => e.id === expId);
+            document.getElementById('checkInTitle').textContent = `Check In: ${exp.title}`;
+            
+            let content = '';
+            if (exp.progressType === 'manual') {
+                content = `
+                    <div class="form-group">
+                        <label class="form-label">Update Progress (%)</label>
+                        <input type="range" id="progressSlider" min="0" max="100" value="${exp.progress}" class="form-input" 
+                               oninput="document.getElementById('progressValue').textContent = this.value + '%'">
+                        <div id="progressValue" style="text-align:center;margin-top:8px;font-size:1.2rem;color:var(--accent);">${exp.progress}%</div>
+                    </div>
+                `;
+            } else if (exp.progressType === 'count') {
+                content = `
+                    <div class="form-group">
+                        <label class="form-label">Current Count</label>
+                        <input type="number" id="currentCount" class="form-input" value="${exp.currentCount}" min="0" max="${exp.targetCount}">
+                        <div style="margin-top:8px;color:var(--text-dim);">Target: ${exp.targetCount}</div>
+                    </div>
+                `;
+            } else {
+                content = `
+                    <div style="margin-bottom:15px;">
+                        <button class="experiment-btn secondary" onclick="addMilestone(${expId})" style="width:100%;">+ Add Milestone</button>
+                    </div>
+                    <div id="milestonesList">
+                        ${exp.milestones.map((m, idx) => `
+                            <div class="milestone-item">
+                                <input type="checkbox" class="milestone-checkbox" ${m.completed ? 'checked' : ''} 
+                                       onchange="toggleMilestone(${expId}, ${idx})">
+                                <span class="milestone-text ${m.completed ? 'completed' : ''}">${m.text}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            content += `
+                <div style="display: flex; gap: 10px; margin-top: 25px;">
+                    <button class="experiment-btn secondary" style="flex: 1;" onclick="closeCheckInModal()">Cancel</button>
+                    <button class="experiment-btn primary" style="flex: 1;" onclick="saveCheckIn(${expId})">Save</button>
+                </div>
+            `;
+            
+            document.getElementById('checkInContent').innerHTML = content;
+            document.getElementById('checkInModal').classList.add('active');
+        }
+        
+        function closeCheckInModal() {
+            document.getElementById('checkInModal').classList.remove('active');
+        }
+        
+        function saveCheckIn(expId) {
+            const exp = experiments.find(e => e.id === expId);
+            
+            if (exp.progressType === 'manual') {
+                exp.progress = parseInt(document.getElementById('progressSlider').value);
+            } else if (exp.progressType === 'count') {
+                exp.currentCount = parseInt(document.getElementById('currentCount').value);
+            }
+            
+            exp.checkIns.push({ date: getTodayKey(), note: 'Check-in' });
+            saveData();
+            closeCheckInModal();
+            renderExperiments();
+            createGlitter(window.innerWidth / 2, window.innerHeight / 2);
+        }
+        
+        function toggleMilestone(expId, idx) {
+            const exp = experiments.find(e => e.id === expId);
+            exp.milestones[idx].completed = !exp.milestones[idx].completed;
+            exp.milestones[idx].date = exp.milestones[idx].completed ? getTodayKey() : null;
+            saveData();
+            openCheckInModal(expId);
+        }
+        
+        function addMilestone(expId) {
+            const text = prompt('Enter milestone:');
+            if (!text) return;
+            const exp = experiments.find(e => e.id === expId);
+            exp.milestones.push({ id: Date.now(), text, completed: false, date: null });
+            saveData();
+            openCheckInModal(expId);
+        }
+        
+        function markComplete(expId) {
+            if (!confirm('Mark this project as complete?')) return;
+            const exp = experiments.find(e => e.id === expId);
+            exp.completed = true;
+            exp.completedDate = getTodayKey();
+            exp.progress = 100;
+            saveData();
+            renderExperiments();
+            createConfetti();
+        }
+        
+        function viewExperimentDetails(expId) {
+            const exp = experiments.find(e => e.id === expId);
+            alert(`${exp.title}\n\nStarted: ${exp.startDate}\nCheck-ins: ${exp.checkIns.length}\nProgress: ${Math.round(exp.progress)}%`);
         }
         
         // Initialize
