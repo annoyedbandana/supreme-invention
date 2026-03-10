@@ -100,16 +100,19 @@
         
         .view-switcher {
             display: flex;
-            gap: 10px;
+            gap: 6px;
             margin-bottom: 30px;
             background: var(--surface);
             padding: 6px;
             border-radius: 12px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
         
         .view-btn {
             flex: 1;
-            padding: 12px;
+            min-width: fit-content;
+            padding: 10px 8px;
             border: none;
             background: transparent;
             color: var(--text-dim);
@@ -118,7 +121,19 @@
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+        
+        @media (max-width: 480px) {
+            .view-btn {
+                padding: 10px 6px;
+                font-size: 0.8rem;
+            }
+            .view-switcher {
+                gap: 4px;
+                padding: 4px;
+            }
         }
         
         .view-btn.active {
@@ -1420,9 +1435,9 @@
             <button class="view-btn active" onclick="switchView('today')">Today</button>
             <button class="view-btn" onclick="switchView('log')">📝 Log</button>
             <button class="view-btn" onclick="switchView('experiments')">🧪 Projects</button>
-            <button class="view-btn" onclick="switchView('stats')">Stats</button>
-            <button class="view-btn" onclick="switchView('badges')">🏅</button>
-            <button class="view-btn" onclick="switchView('settings')">⚙️</button>
+            <button class="view-btn" onclick="switchView('stats')">📊 Stats</button>
+            <button class="view-btn" onclick="switchView('badges')">🏅 Badges</button>
+            <button class="view-btn" onclick="switchView('settings')">⚙️ Settings</button>
         </div>
         
         <!-- TODAY VIEW -->
