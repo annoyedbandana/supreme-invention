@@ -91,7 +91,6 @@
             0% { background-position: 0% center; }
             100% { background-position: 200% center; }
         }
-        }
         
         .subtitle {
             color: var(--text-dim);
@@ -1237,6 +1236,31 @@
             color: var(--text-dim);
         }
         
+        /* Initiation Difficulty Buttons */
+        .initiation-btn {
+            flex: 1;
+            padding: 15px 10px;
+            border: 2px solid var(--lavender);
+            background: var(--bg);
+            color: var(--text);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-align: center;
+        }
+        
+        .initiation-btn:hover {
+            background: var(--surface-hover);
+        }
+        
+        .initiation-btn.selected {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+        
         /* Weekly Frequency Goals */
         .frequency-goal-card {
             background: var(--surface);
@@ -1456,32 +1480,166 @@
         
         <!-- DAILY LOG VIEW -->
         <div id="logView" class="section" style="display:none;">
-            <h2 style="font-size: 1.5rem; margin-bottom: 10px; color: var(--accent);">📝 Daily Log</h2>
-            <p style="color: var(--text-dim); margin-bottom: 20px; font-size: 0.9rem;">Track patterns behind your focus and energy</p>
-            
-            <!-- Quick Access Buttons -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 25px;">
-                <button class="experiment-btn primary" onclick="openMorningLog()">☀️ Morning Check-In</button>
-                <button class="experiment-btn primary" onclick="openEveningLog()">🌙 Evening Check-In</button>
+            <!-- Date Navigation -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="font-size: 1.5rem; margin: 0; color: var(--accent);">📝 Daily Log</h2>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button onclick="changeLogDate(-1)" style="background: var(--surface-hover); border: 1px solid var(--lavender); padding: 6px 12px; border-radius: 6px; cursor: pointer;">◀</button>
+                    <input type="date" id="logDateInput" class="date-input" onchange="onLogDateChange()" style="padding: 6px 10px;">
+                    <button onclick="changeLogDate(1)" id="logNextBtn" style="background: var(--surface-hover); border: 1px solid var(--lavender); padding: 6px 12px; border-radius: 6px; cursor: pointer;">▶</button>
+                </div>
             </div>
             
-            <!-- Today's Log Summary -->
-            <div id="logSummary" style="margin-bottom: 25px;"></div>
+            <div id="logDateDisplay" style="text-align: center; color: var(--text-dim); margin-bottom: 20px; font-size: 0.9rem;"></div>
             
-            <!-- Quick Dysregulation Log -->
-            <div style="background: var(--surface); padding: 20px; border-radius: 16px; margin-bottom: 25px;">
-                <h3 style="margin-bottom: 15px;">⚡ Quick Dysregulation Log</h3>
-                <button class="experiment-btn secondary" onclick="openDysregulationLog()" style="width: 100%;">+ Log Episode</button>
+            <!-- Today's Tasks -->
+            <div style="background: var(--surface); padding: 20px; border-radius: 16px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 style="margin: 0;">📋 Tasks Completed</h3>
+                    <button class="experiment-btn primary" onclick="openTaskLog()" style="padding: 8px 16px;">+ Add Task</button>
+                </div>
+                <div id="taskLogList"></div>
             </div>
             
-            <!-- ADHD Documents -->
+            <!-- Dysregulation Episodes -->
             <div style="background: var(--surface); padding: 20px; border-radius: 16px;">
-                <h3 style="margin-bottom: 15px;">📚 Your ADHD Toolkit</h3>
-                <div style="display: grid; gap: 10px;">
-                    <button class="experiment-btn secondary" onclick="viewDocument('rsd')">RSD Trigger Map</button>
-                    <button class="experiment-btn secondary" onclick="viewDocument('regulation')">Regulation Menu</button>
-                    <button class="experiment-btn secondary" onclick="viewDocument('evidence')">Evidence Base</button>
-                    <button class="experiment-btn secondary" onclick="viewDocument('launch')">Launch Sequence</button>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 style="margin: 0;">⚡ Emotional Dysregulation</h3>
+                    <button class="experiment-btn secondary" onclick="openDysregulationLog()" style="padding: 8px 16px;">+ Log Episode</button>
+                </div>
+                <div id="dysregulationLogList"></div>
+            </div>
+        </div>
+        
+        <!-- Task Log Modal -->
+        <div id="taskLogModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-title">📋 Log a Task</div>
+                
+                <div class="form-group">
+                    <label class="form-label">What task did you do?</label>
+                    <input type="text" id="taskNameInput" class="form-input" placeholder="e.g., Worked on manuscript">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Was this task something you...</label>
+                    <select id="taskMotivation" class="form-select">
+                        <option value="">Select...</option>
+                        <option value="wanted">Wanted to do / Had genuine interest in</option>
+                        <option value="had_to">Had to do / Needed to be done</option>
+                        <option value="hated">Hated doing but forced myself</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Initiation Difficulty (1-5)</label>
+                    <div style="display: flex; gap: 10px; justify-content: center; margin-top: 10px;">
+                        <button type="button" onclick="selectInitiation(1)" class="initiation-btn" data-value="1">1<br><span style="font-size:0.7rem;">Easy</span></button>
+                        <button type="button" onclick="selectInitiation(2)" class="initiation-btn" data-value="2">2</button>
+                        <button type="button" onclick="selectInitiation(3)" class="initiation-btn" data-value="3">3<br><span style="font-size:0.7rem;">Medium</span></button>
+                        <button type="button" onclick="selectInitiation(4)" class="initiation-btn" data-value="4">4</button>
+                        <button type="button" onclick="selectInitiation(5)" class="initiation-btn" data-value="5">5<br><span style="font-size:0.7rem;">Very Hard</span></button>
+                    </div>
+                    <input type="hidden" id="taskInitiation" value="3">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">How long did you work on it?</label>
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+                        <input type="number" id="taskDuration" class="form-input" placeholder="30" min="1">
+                        <select id="taskDurationUnit" class="form-select">
+                            <option value="min">minutes</option>
+                            <option value="hrs">hours</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group" id="initiationSequenceGroup" style="display:none;">
+                    <label class="form-label">Did you use an initiation sequence to get started?</label>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
+                        <label style="font-size: 0.85rem;"><input type="checkbox" class="init-seq-check" value="Music"> Music</label>
+                        <label style="font-size: 0.85rem;"><input type="checkbox" class="init-seq-check" value="Exercise"> Exercise</label>
+                        <label style="font-size: 0.85rem;"><input type="checkbox" class="init-seq-check" value="Push-ups/Jumping jacks"> Push-ups/Jumping jacks</label>
+                        <label style="font-size: 0.85rem;"><input type="checkbox" class="init-seq-check" value="Coffee/Caffeine"> Coffee/Caffeine</label>
+                        <label style="font-size: 0.85rem;"><input type="checkbox" class="init-seq-check" value="Walk"> Walk</label>
+                        <label style="font-size: 0.85rem;"><input type="checkbox" class="init-seq-check" value="Shower"> Shower</label>
+                        <label style="font-size: 0.85rem;"><input type="checkbox" class="init-seq-check" value="Body doubling"> Body doubling</label>
+                        <label style="font-size: 0.85rem;"><input type="checkbox" class="init-seq-check" value="Timer/Pomodoro"> Timer/Pomodoro</label>
+                        <label style="font-size: 0.85rem;"><input type="checkbox" class="init-seq-check" value="Other"> Other</label>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 25px;">
+                    <button class="experiment-btn secondary" style="flex: 1;" onclick="closeTaskLog()">Cancel</button>
+                    <button class="experiment-btn primary" style="flex: 1;" onclick="saveTaskLog()">Save</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Dysregulation Log Modal -->
+        <div id="dysregulationLogModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-title">⚡ Log Emotional Dysregulation</div>
+                
+                <div style="background: var(--bg); padding: 15px; border-radius: 12px; margin-bottom: 20px; font-size: 0.85rem; line-height: 1.6;">
+                    <strong>What counts as emotional dysregulation?</strong>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>Emotional response feels disproportionate to the trigger</li>
+                        <li>Difficulty regulating emotional intensity (too intense or can't feel)</li>
+                        <li>Rapid mood shifts or emotional volatility</li>
+                        <li>Overwhelming emotions that interfere with functioning</li>
+                        <li>RSD (Rejection Sensitive Dysphoria) episodes</li>
+                        <li>Emotional meltdown or shutdown</li>
+                    </ul>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Type of episode</label>
+                    <select id="dysregType" class="form-select">
+                        <option value="">Select type...</option>
+                        <option value="rsd">RSD (Rejection Sensitivity)</option>
+                        <option value="meltdown">Emotional Meltdown</option>
+                        <option value="shutdown">Emotional Shutdown</option>
+                        <option value="disproportionate">Disproportionate Response</option>
+                        <option value="mood_shift">Rapid Mood Shift</option>
+                        <option value="overwhelm">Emotional Overwhelm</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Intensity (1-5)</label>
+                    <div style="display: flex; gap: 10px; justify-content: center; margin-top: 10px;">
+                        <button type="button" onclick="selectDysregIntensity(1)" class="initiation-btn" data-value="1">1<br><span style="font-size:0.7rem;">Mild</span></button>
+                        <button type="button" onclick="selectDysregIntensity(2)" class="initiation-btn" data-value="2">2</button>
+                        <button type="button" onclick="selectDysregIntensity(3)" class="initiation-btn" data-value="3">3<br><span style="font-size:0.7rem;">Moderate</span></button>
+                        <button type="button" onclick="selectDysregIntensity(4)" class="initiation-btn" data-value="4">4</button>
+                        <button type="button" onclick="selectDysregIntensity(5)" class="initiation-btn" data-value="5">5<br><span style="font-size:0.7rem;">Severe</span></button>
+                    </div>
+                    <input type="hidden" id="dysregIntensity" value="3">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Trigger (optional - brief note)</label>
+                    <input type="text" id="dysregTrigger" class="form-input" placeholder="e.g., Work email criticism">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Duration</label>
+                    <select id="dysregDuration" class="form-select">
+                        <option value="<5min">Less than 5 minutes</option>
+                        <option value="5-15min">5-15 minutes</option>
+                        <option value="15-30min">15-30 minutes</option>
+                        <option value="30-60min">30-60 minutes</option>
+                        <option value="1-2hrs">1-2 hours</option>
+                        <option value=">2hrs">More than 2 hours</option>
+                        <option value="ongoing">Still ongoing</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 25px;">
+                    <button class="experiment-btn secondary" style="flex: 1;" onclick="closeDysregulationLog()">Cancel</button>
+                    <button class="experiment-btn primary" style="flex: 1;" onclick="saveDysregulationLog()">Save</button>
                 </div>
             </div>
         </div>
@@ -1699,7 +1857,7 @@
         </div>
         
         <!-- BADGES VIEW -->
-        <div id="badgesView" class="section" style="display:none;">
+        <div id="badgesView" class="section">
             <!-- Achievement Badges -->
             <div style="margin-bottom: 30px;">
                 <h2 style="font-size: 1.5rem; margin-bottom: 10px; color: var(--accent);">🏅 Your Achievements</h2>
@@ -1836,30 +1994,30 @@
         // Daily Log data for ADHD tracking
         let dailyLogs = JSON.parse(localStorage.getItem('dailyLogs')) || {};
         /*
-        dailyLogs structure:
+        Simplified dailyLogs structure:
         {
             "2026-03-10": {
-                morning: {
-                    sleepTime: "23:00",
-                    wakeTime: "07:00",
-                    sleepQuality: 7,
-                    morningEnergy: 6,
-                    intentions: ["Finish Chapter 1", "Exercise", "Call Mom"]
-                },
-                evening: {
-                    initiationDifficulty: 5,
-                    launchSequence: ["coffee", "walk", "shower"],
-                    exercise: { type: "Running", duration: 30, intensity: 7 },
-                    postExerciseFocus: 8,
-                    emotionalEpisode: false,
-                    emotionalTrigger: "",
-                    skippedMeals: false,
-                    dayRating: 7
-                },
-                dysregulation: [] // array of episodes
+                tasks: [{
+                    name: "Worked on manuscript",
+                    motivation: "wanted" | "had_to" | "hated",
+                    initiation: 1-5,
+                    duration: 30,
+                    durationUnit: "min" | "hrs",
+                    sequence: ["Music", "Coffee"],
+                    timestamp: "14:30"
+                }],
+                dysregulation: [{
+                    type: "rsd" | "meltdown" | "shutdown" | etc,
+                    intensity: 1-5,
+                    trigger: "Brief note",
+                    duration: "<5min" | "5-15min" | etc,
+                    timestamp: "16:45"
+                }]
             }
         }
         */
+        
+        let currentLogDate = getTodayKey();
         
         // Energy tracking (for 2-week mapping)
         let energyTracking = JSON.parse(localStorage.getItem('energyTracking')) || {
@@ -2387,18 +2545,6 @@
         }
         
         // Switch views
-        function switchView(view) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-            
-            document.getElementById(view + 'View').classList.add('active');
-            event.target.classList.add('active');
-            
-            if (view === 'today') renderToday();
-            if (view === 'stats') renderStats();
-            if (view === 'history') renderHistory();
-            if (view === 'settings') renderSettings();
-        }
         
         // Toggle goal completion
         function toggleGoal(index) {
@@ -3543,8 +3689,13 @@
                 goals: goals,
                 data: data,
                 goalMetadata: goalMetadata,
+                experiments: experiments,
+                dailyLogs: dailyLogs,
+                energyTracking: energyTracking,
+                adhdDocuments: adhdDocuments,
+                userProgress: userProgress,
                 exportDate: new Date().toISOString(),
-                version: '1.0'
+                version: '2.0'
             };
             
             const dataStr = JSON.stringify(exportObj, null, 2);
@@ -3559,7 +3710,7 @@
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
             
-            alert('✅ Data exported successfully! File downloaded to your device.');
+            alert('✅ Data exported successfully! Includes habits, projects, and logs.');
         }
         
         // Import data from JSON file
@@ -3583,10 +3734,15 @@
                         goals = importedData.goals;
                         data = importedData.data;
                         goalMetadata = importedData.goalMetadata || {};
+                        experiments = importedData.experiments || [];
+                        dailyLogs = importedData.dailyLogs || {};
+                        energyTracking = importedData.energyTracking || energyTracking;
+                        adhdDocuments = importedData.adhdDocuments || adhdDocuments;
+                        userProgress = importedData.userProgress || userProgress;
                         
                         saveData();
                         
-                        alert('✅ Data imported successfully! Refreshing...');
+                        alert('✅ Data imported successfully! Includes habits, projects, and logs. Refreshing...');
                         location.reload();
                     }
                 } catch (error) {
@@ -3690,243 +3846,264 @@
         }
         
         // DAILY LOG FUNCTIONS
-        function initDailyLog(date) {
+        // Initialize log for a date (new simplified structure)
+        function initLog(date) {
             if (!dailyLogs[date]) {
                 dailyLogs[date] = {
-                    morning: null,
-                    evening: null,
+                    tasks: [],
                     dysregulation: []
                 };
             }
         }
         
+        // Keep for backward compatibility
+        function initDailyLog(date) {
+            initLog(date);
+        }
+        
+        // NEW SIMPLIFIED LOG FUNCTIONS
+        
+        // Change log date
+        function changeLogDate(offset) {
+            const currentDate = new Date(currentLogDate);
+            currentDate.setDate(currentDate.getDate() + offset);
+            currentLogDate = currentDate.toISOString().split('T')[0];
+            
+            document.getElementById('logDateInput').value = currentLogDate;
+            renderDailyLog();
+            updateLogNextButton();
+        }
+
+        function onLogDateChange() {
+            currentLogDate = document.getElementById('logDateInput').value;
+            renderDailyLog();
+            updateLogNextButton();
+        }
+
+        function updateLogNextButton() {
+            const today = getTodayKey();
+            const nextBtn = document.getElementById('logNextBtn');
+            if (nextBtn) {
+                nextBtn.disabled = currentLogDate >= today;
+                nextBtn.style.opacity = currentLogDate >= today ? '0.5' : '1';
+                nextBtn.style.cursor = currentLogDate >= today ? 'not-allowed' : 'pointer';
+            }
+        }
+
+        // Render daily log
         function renderDailyLog() {
+            initLog(currentLogDate);
+            const log = dailyLogs[currentLogDate];
+            
+            // Update date display
+            const dateDisplay = document.getElementById('logDateDisplay');
+            const logDate = new Date(currentLogDate);
             const today = getTodayKey();
-            initDailyLog(today);
-            const log = dailyLogs[today];
+            const isToday = currentLogDate === today;
             
-            let summary = '<div style="background:var(--surface);padding:20px;border-radius:16px;">';
-            summary += '<h3 style="margin-bottom:15px;">Today\'s Summary</h3>';
+            if (dateDisplay) {
+                dateDisplay.textContent = isToday ? 'Today' : logDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+            }
             
-            if (log.morning) {
-                summary += `<p style="margin:8px 0;"><strong>☀️ Morning:</strong> Sleep ${log.morning.sleepQuality}/10, Energy ${log.morning.morningEnergy}/10</p>`;
-                summary += `<p style="margin:8px 0;color:var(--text-dim);font-size:0.85rem;">Intentions: ${log.morning.intentions.filter(i => i).join(', ') || 'None set'}</p>`;
+            // Render tasks
+            const taskList = document.getElementById('taskLogList');
+            if (!taskList) return;
+            
+            if (log.tasks.length === 0) {
+                taskList.innerHTML = '<p style="text-align:center;color:var(--text-dim);padding:20px;">No tasks logged yet</p>';
             } else {
-                summary += '<p style="color:var(--text-dim);">☀️ Morning check-in not completed</p>';
+                taskList.innerHTML = log.tasks.map((task, idx) => {
+                    const motivationEmoji = {
+                        wanted: '✨',
+                        had_to: '📌',
+                        hated: '😤'
+                    };
+                    const motivationText = {
+                        wanted: 'Wanted to do',
+                        had_to: 'Had to do',
+                        hated: 'Hated doing'
+                    };
+                    
+                    const filled = String.fromCharCode(9608);
+                    const empty = String.fromCharCode(9617);
+                    const initiationBar = filled.repeat(task.initiation) + empty.repeat((5 - task.initiation));
+                    
+                    return `
+                        <div style="background: var(--bg); padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 3px solid var(--accent);">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                                <strong style="flex: 1;">${task.name}</strong>
+                                <button onclick="deleteTask(${idx})" style="background: transparent; border: none; color: var(--text-dim); cursor: pointer; padding: 0 5px;">✕</button>
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--text-dim); line-height: 1.6;">
+                                <div>${motivationEmoji[task.motivation]} ${motivationText[task.motivation]}</div>
+                                <div>Initiation: ${task.initiation}/5 ${initiationBar}</div>
+                                <div>Duration: ${task.duration} ${task.durationUnit}</div>
+                                ${task.sequence && task.sequence.length > 0 ? `<div>Sequence: ${task.sequence.join(', ')}</div>` : ''}
+                                <div style="margin-top: 5px; opacity: 0.7;">Logged at ${task.timestamp}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
             }
             
-            if (log.evening) {
-                summary += `<p style="margin:8px 0;"><strong>🌙 Evening:</strong> Day Rating ${log.evening.dayRating}/10</p>`;
-                if (log.evening.tasks && log.evening.tasks.length > 0) {
-                    summary += '<div style="margin:10px 0;padding:10px;background:var(--bg);border-radius:8px;">';
-                    summary += '<strong style="font-size:0.9rem;">📋 Tasks Completed:</strong>';
-                    log.evening.tasks.forEach(task => {
-                        summary += `<div style="margin:8px 0;padding:8px;background:var(--surface);border-radius:6px;">`;
-                        summary += `<div style="font-weight:600;">${task.name}</div>`;
-                        summary += `<div style="font-size:0.85rem;color:var(--text-dim);">Initiation: ${task.initiation}/10`;
-                        if (task.sequences && task.sequences.length > 0) {
-                            summary += ` • Sequence: ${task.sequences.join(', ')}`;
-                        }
-                        summary += `</div></div>`;
-                    });
-                    summary += '</div>';
-                }
+            // Render dysregulation
+            const dysregList = document.getElementById('dysregulationLogList');
+            if (!dysregList) return;
+            
+            if (log.dysregulation.length === 0) {
+                dysregList.innerHTML = '<p style="text-align:center;color:var(--text-dim);padding:20px;">No episodes logged</p>';
             } else {
-                summary += '<p style="color:var(--text-dim);">🌙 Evening check-in not completed</p>';
+                dysregList.innerHTML = log.dysregulation.map((episode, idx) => {
+                    const typeLabels = {
+                        rsd: 'RSD (Rejection Sensitivity)',
+                        meltdown: 'Emotional Meltdown',
+                        shutdown: 'Emotional Shutdown',
+                        disproportionate: 'Disproportionate Response',
+                        mood_shift: 'Rapid Mood Shift',
+                        overwhelm: 'Emotional Overwhelm',
+                        other: 'Other'
+                    };
+                    
+                    const filled = String.fromCharCode(9608);
+                    const empty = String.fromCharCode(9617);
+                    const intensityBar = filled.repeat(episode.intensity) + empty.repeat((5 - episode.intensity));
+                    
+                    return `
+                        <div style="background: var(--bg); padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 3px solid #ff6b9d;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                                <strong style="flex: 1;">${typeLabels[episode.type]}</strong>
+                                <button onclick="deleteDysregulation(${idx})" style="background: transparent; border: none; color: var(--text-dim); cursor: pointer; padding: 0 5px;">✕</button>
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--text-dim); line-height: 1.6;">
+                                <div>Intensity: ${episode.intensity}/5 ${intensityBar}</div>
+                                <div>Duration: ${episode.duration}</div>
+                                ${episode.trigger ? `<div>Trigger: ${episode.trigger}</div>` : ''}
+                                <div style="margin-top: 5px; opacity: 0.7;">Logged at ${episode.timestamp}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
             }
             
-            if (log.dysregulation.length > 0) {
-                summary += `<p style="margin:8px 0;color:#ff6b9d;"><strong>⚡ ${log.dysregulation.length} dysregulation episode(s) logged</strong></p>`;
-            }
-            
-            summary += '</div>';
-            document.getElementById('logSummary').innerHTML = summary;
+            updateLogNextButton();
         }
-        
-        function openMorningLog() {
-            const today = getTodayKey();
-            initDailyLog(today);
-            const morning = dailyLogs[today].morning;
+
+        // Task Log functions
+        function openTaskLog() {
+            document.getElementById('taskLogModal').classList.add('active');
+            document.getElementById('taskNameInput').value = '';
+            document.getElementById('taskMotivation').value = '';
+            document.getElementById('taskInitiation').value = '3';
+            document.getElementById('taskDuration').value = '';
+            document.getElementById('taskDurationUnit').value = 'min';
+            document.querySelectorAll('.init-seq-check').forEach(cb => cb.checked = false);
+            document.getElementById('initiationSequenceGroup').style.display = 'none';
             
-            if (morning) {
-                document.getElementById('sleepTime').value = morning.sleepTime || '';
-                document.getElementById('wakeTime').value = morning.wakeTime || '';
-                document.getElementById('sleepQuality').value = morning.sleepQuality || 5;
-                document.getElementById('sleepQualityVal').textContent = morning.sleepQuality || 5;
-                document.getElementById('morningEnergy').value = morning.morningEnergy || 5;
-                document.getElementById('morningEnergyVal').textContent = morning.morningEnergy || 5;
-                document.getElementById('intention1').value = morning.intentions[0] || '';
-                document.getElementById('intention2').value = morning.intentions[1] || '';
-                document.getElementById('intention3').value = morning.intentions[2] || '';
-            }
-            
-            document.getElementById('morningLogModal').classList.add('active');
+            // Reset initiation buttons
+            document.querySelectorAll('#taskLogModal .initiation-btn').forEach(btn => btn.classList.remove('selected'));
+            const btn3 = document.querySelector('#taskLogModal .initiation-btn[data-value="3"]');
+            if (btn3) btn3.classList.add('selected');
         }
-        
-        function closeMorningLog() {
-            document.getElementById('morningLogModal').classList.remove('active');
+
+        function closeTaskLog() {
+            document.getElementById('taskLogModal').classList.remove('active');
         }
-        
-        function saveMorningLog() {
-            const today = getTodayKey();
-            dailyLogs[today].morning = {
-                sleepTime: document.getElementById('sleepTime').value,
-                wakeTime: document.getElementById('wakeTime').value,
-                sleepQuality: parseInt(document.getElementById('sleepQuality').value),
-                morningEnergy: parseInt(document.getElementById('morningEnergy').value),
-                intentions: [
-                    document.getElementById('intention1').value,
-                    document.getElementById('intention2').value,
-                    document.getElementById('intention3').value
-                ]
-            };
-            saveData();
-            closeMorningLog();
-            renderDailyLog();
-            createGlitter(window.innerWidth / 2, window.innerHeight / 2);
+
+        function selectInitiation(value) {
+            document.getElementById('taskInitiation').value = value;
+            document.querySelectorAll('#taskLogModal .initiation-btn').forEach(btn => btn.classList.remove('selected'));
+            event.target.closest('.initiation-btn').classList.add('selected');
+            
+            // Show/hide sequence options if difficulty >= 3
+            document.getElementById('initiationSequenceGroup').style.display = value >= 3 ? 'block' : 'none';
         }
-        
-        function openEveningLog() {
-            const today = getTodayKey();
-            initDailyLog(today);
-            const evening = dailyLogs[today].evening;
+
+        function saveTaskLog() {
+            const name = document.getElementById('taskNameInput').value.trim();
+            const motivation = document.getElementById('taskMotivation').value;
+            const initiation = parseInt(document.getElementById('taskInitiation').value);
+            const duration = parseInt(document.getElementById('taskDuration').value);
+            const durationUnit = document.getElementById('taskDurationUnit').value;
             
-            // Initialize with one empty task entry
-            if (!evening || !evening.tasks || evening.tasks.length === 0) {
-                document.getElementById('tasksContainer').innerHTML = '';
-                addTaskEntry();
-            } else {
-                document.getElementById('tasksContainer').innerHTML = evening.tasks.map((task, idx) => 
-                    createTaskEntryHTML(idx, task)
-                ).join('');
-            }
+            if (!name) { alert('Please enter a task name'); return; }
+            if (!motivation) { alert('Please select motivation type'); return; }
+            if (!duration) { alert('Please enter duration'); return; }
             
-            // Check which exercise habits were completed today
-            const exerciseHabits = goals
-                .map((goal, idx) => ({ goal, idx, category: goalMetadata[idx]?.category }))
-                .filter(item => item.category === 'physical');
+            const sequence = Array.from(document.querySelectorAll('.init-seq-check:checked')).map(cb => cb.value);
             
-            const completedExercise = exerciseHabits.filter(item => 
-                data[today] && data[today][item.idx]
-            );
-            
-            if (completedExercise.length > 0) {
-                document.getElementById('exerciseFromHabits').innerHTML = 
-                    '<div style="color:var(--accent);font-weight:600;">✅ Completed today:</div>' +
-                    completedExercise.map(item => 
-                        `<div style="padding:5px 0;">• ${item.goal}</div>`
-                    ).join('');
-            } else {
-                document.getElementById('exerciseFromHabits').innerHTML = 
-                    '<div style="color:var(--text-dim);">No physical habits completed today</div>';
-            }
-            
-            if (evening) {
-                document.getElementById('postExerciseFocus').value = evening.postExerciseFocus || 5;
-                document.getElementById('focusVal').textContent = evening.postExerciseFocus || 5;
-                document.getElementById('dayRating').value = evening.dayRating || 5;
-                document.getElementById('dayRatingVal').textContent = evening.dayRating || 5;
-            }
-            
-            document.getElementById('eveningLogModal').classList.add('active');
-        }
-        
-        function closeEveningLog() {
-            document.getElementById('eveningLogModal').classList.remove('active');
-        }
-        
-        function toggleEmotionalTrigger() {
-            const show = document.getElementById('emotionalEpisode').value === 'yes';
-            document.getElementById('emotionalTrigger').style.display = show ? 'block' : 'none';
-        }
-        
-        let taskEntryCount = 0;
-        
-        function createTaskEntryHTML(index, task = null) {
-            const sequences = adhdDocuments.launchSequence.length > 0 
-                ? adhdDocuments.launchSequence 
-                : ['Coffee', 'Shower', 'Walk', 'Music', 'Breakfast'];
-            
-            return `
-                <div class="task-entry" id="taskEntry${index}">
-                    <div class="task-entry-header">
-                        <strong>Task ${index + 1}</strong>
-                        ${index > 0 ? `<button type="button" class="remove-task-btn" onclick="removeTaskEntry(${index})">Remove</button>` : ''}
-                    </div>
-                    <input type="text" class="form-input" id="taskName${index}" placeholder="Task name" value="${task?.name || ''}" style="margin-bottom:10px;">
-                    <label style="font-size:0.85rem;display:block;margin-bottom:5px;">Initiation Difficulty (1-10)</label>
-                    <input type="range" id="taskInitiation${index}" min="1" max="10" value="${task?.initiation || 5}" class="form-input"
-                           oninput="document.getElementById('taskInitVal${index}').textContent = this.value">
-                    <div id="taskInitVal${index}" style="text-align:center;color:var(--accent);margin-bottom:10px;">${task?.initiation || 5}</div>
-                    <label style="font-size:0.85rem;display:block;margin-bottom:5px;">Launch Sequence Used</label>
-                    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
-                        ${sequences.map((seq, idx) => `
-                            <label style="font-size:0.85rem;">
-                                <input type="checkbox" id="taskSeq${index}_${idx}" value="${seq}" ${task?.sequences?.includes(seq) ? 'checked' : ''}> ${seq}
-                            </label>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
-        
-        function addTaskEntry() {
-            const container = document.getElementById('tasksContainer');
-            container.innerHTML += createTaskEntryHTML(taskEntryCount);
-            taskEntryCount++;
-        }
-        
-        function removeTaskEntry(index) {
-            document.getElementById(`taskEntry${index}`).remove();
-        }
-        
-        function saveEveningLog() {
-            const today = getTodayKey();
-            
-            // Collect all task entries
-            const tasks = [];
-            document.querySelectorAll('.task-entry').forEach((entry, index) => {
-                const nameInput = entry.querySelector('[id^="taskName"]');
-                const initiationInput = entry.querySelector('[id^="taskInitiation"]');
-                const sequenceInputs = entry.querySelectorAll('[id^="taskSeq"]:checked');
-                
-                if (nameInput && nameInput.value.trim()) {
-                    tasks.push({
-                        name: nameInput.value.trim(),
-                        initiation: parseInt(initiationInput.value) || 5,
-                        sequences: Array.from(sequenceInputs).map(cb => cb.value)
-                    });
-                }
+            initLog(currentLogDate);
+            dailyLogs[currentLogDate].tasks.push({
+                name,
+                motivation,
+                initiation,
+                duration,
+                durationUnit,
+                sequence: initiation >= 3 ? sequence : [],
+                timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
             });
             
-            dailyLogs[today].evening = {
-                tasks: tasks,
-                postExerciseFocus: parseInt(document.getElementById('postExerciseFocus').value),
-                emotionalEpisode: document.getElementById('emotionalEpisode').value === 'yes',
-                emotionalTrigger: document.getElementById('emotionalTrigger').value,
-                skippedMeals: document.getElementById('skippedMeals').value === 'yes',
-                dayRating: parseInt(document.getElementById('dayRating').value)
-            };
             saveData();
-            closeEveningLog();
+            closeTaskLog();
             renderDailyLog();
             createGlitter(window.innerWidth / 2, window.innerHeight / 2);
         }
-        
+
+        function deleteTask(index) {
+            if (!confirm('Delete this task?')) return;
+            dailyLogs[currentLogDate].tasks.splice(index, 1);
+            saveData();
+            renderDailyLog();
+        }
+
+        // Dysregulation Log functions
         function openDysregulationLog() {
-            const note = prompt('Quick dysregulation log:\n\nTrigger (what caused it):');
-            if (!note) return;
+            document.getElementById('dysregulationLogModal').classList.add('active');
+            document.getElementById('dysregType').value = '';
+            document.getElementById('dysregIntensity').value = '3';
+            document.getElementById('dysregTrigger').value = '';
+            document.getElementById('dysregDuration').value = '5-15min';
             
-            const intensity = prompt('Intensity (1-10):');
-            const today = getTodayKey();
-            initDailyLog(today);
+            // Reset intensity buttons
+            document.querySelectorAll('#dysregulationLogModal .initiation-btn').forEach(btn => btn.classList.remove('selected'));
+            const btn3 = document.querySelector('#dysregulationLogModal .initiation-btn[data-value="3"]');
+            if (btn3) btn3.classList.add('selected');
+        }
+
+        function closeDysregulationLog() {
+            document.getElementById('dysregulationLogModal').classList.remove('active');
+        }
+
+        function selectDysregIntensity(value) {
+            document.getElementById('dysregIntensity').value = value;
+            document.querySelectorAll('#dysregulationLogModal .initiation-btn').forEach(btn => btn.classList.remove('selected'));
+            event.target.closest('.initiation-btn').classList.add('selected');
+        }
+
+        function saveDysregulationLog() {
+            const type = document.getElementById('dysregType').value;
+            const intensity = parseInt(document.getElementById('dysregIntensity').value);
+            const trigger = document.getElementById('dysregTrigger').value.trim();
+            const duration = document.getElementById('dysregDuration').value;
             
-            dailyLogs[today].dysregulation.push({
-                time: new Date().toLocaleTimeString(),
-                trigger: note,
-                intensity: parseInt(intensity) || 5
+            if (!type) { alert('Please select episode type'); return; }
+            
+            initLog(currentLogDate);
+            dailyLogs[currentLogDate].dysregulation.push({
+                type,
+                intensity,
+                trigger,
+                duration,
+                timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
             });
             
+            saveData();
+            closeDysregulationLog();
+            renderDailyLog();
+        }
+
+        function deleteDysregulation(index) {
+            if (!confirm('Delete this episode?')) return;
+            dailyLogs[currentLogDate].dysregulation.splice(index, 1);
             saveData();
             renderDailyLog();
         }
@@ -4052,12 +4229,14 @@
                     ${!isCompleted ? `
                         <div class="experiment-actions">
                             <button class="experiment-btn primary" onclick="openCheckInModal(${exp.id})">Check In</button>
-                            <button class="experiment-btn secondary" onclick="viewExperimentDetails(${exp.id})">Details</button>
+                            <button class="experiment-btn secondary" onclick="editExperiment(${exp.id})">✏️ Edit</button>
                             <button class="experiment-btn secondary" onclick="markComplete(${exp.id})">✓ Complete</button>
+                            <button class="experiment-btn secondary" onclick="deleteExperiment(${exp.id})" style="color: #ff6b9d;">🗑️ Delete</button>
                         </div>
                     ` : `
-                        <div style="margin-top:10px;color:var(--text-dim);font-size:0.85rem;">
-                            ✅ Completed ${new Date(exp.completedDate).toLocaleDateString()} • Took ${Math.floor((new Date(exp.completedDate) - new Date(exp.startDate)) / (1000 * 60 * 60 * 24))} days
+                        <div style="margin-top:10px;color:var(--text-dim);font-size:0.85rem;display:flex;justify-content:space-between;align-items:center;">
+                            <span>✅ Completed ${new Date(exp.completedDate).toLocaleDateString()} • Took ${Math.floor((new Date(exp.completedDate) - new Date(exp.startDate)) / (1000 * 60 * 60 * 24))} days</span>
+                            <button class="experiment-btn secondary" onclick="deleteExperiment(${exp.id})" style="padding: 4px 10px; font-size: 0.75rem;">🗑️</button>
                         </div>
                     `}
                 </div>
@@ -4162,6 +4341,47 @@
             createConfetti();
         }
         
+        function editExperiment(expId) {
+            const exp = experiments.find(e => e.id === expId);
+            if (!exp) return;
+            
+            const newTitle = prompt('Project Title:', exp.title);
+            if (newTitle === null) return; // Cancelled
+            if (newTitle.trim()) exp.title = newTitle.trim();
+            
+            const newDeadline = prompt('Deadline (YYYY-MM-DD) - leave empty to remove:', exp.deadline || '');
+            if (newDeadline !== null) {
+                exp.deadline = newDeadline.trim() || null;
+            }
+            
+            const categories = ['learning', 'career', 'creative', 'writing', 'fitness', 'other'];
+            const categoryChoice = prompt(`Category:\n1. Learning\n2. Career\n3. Creative\n4. Writing\n5. Fitness\n6. Other\n\nEnter number (1-6):`, categories.indexOf(exp.category) + 1);
+            if (categoryChoice && categoryChoice >= 1 && categoryChoice <= 6) {
+                exp.category = categories[parseInt(categoryChoice) - 1];
+            }
+            
+            saveData();
+            renderExperiments();
+            alert('✅ Project updated!');
+        }
+        
+        function deleteExperiment(expId) {
+            const exp = experiments.find(e => e.id === expId);
+            const confirmMsg = exp.completed 
+                ? `Delete completed project "${exp.title}" from history?` 
+                : `Delete active project "${exp.title}"? This cannot be undone.`;
+            
+            if (!confirm(confirmMsg)) return;
+            
+            const index = experiments.findIndex(e => e.id === expId);
+            if (index > -1) {
+                experiments.splice(index, 1);
+                saveData();
+                renderExperiments();
+                alert('🗑️ Project deleted');
+            }
+        }
+        
         function viewExperimentDetails(expId) {
             const exp = experiments.find(e => e.id === expId);
             alert(`${exp.title}\n\nStarted: ${exp.startDate}\nCheck-ins: ${exp.checkIns.length}\nProgress: ${Math.round(exp.progress)}%`);
@@ -4172,7 +4392,11 @@
         applyFont(currentFont); // Apply saved font
         updateProgress(); // Calculate quest progress
         currentDateKey = getTodayKey();
+        currentLogDate = getTodayKey(); // Initialize log date
         document.getElementById('dateInput').value = currentDateKey;
+        if (document.getElementById('logDateInput')) {
+            document.getElementById('logDateInput').value = currentLogDate;
+        }
         renderToday();
     </script>
 </body>
