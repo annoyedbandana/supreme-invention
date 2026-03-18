@@ -91,6 +91,7 @@
             0% { background-position: 0% center; }
             100% { background-position: 200% center; }
         }
+        }
         
         .subtitle {
             color: var(--text-dim);
@@ -1033,6 +1034,32 @@
             transform: scale(1.05);
         }
         
+        .context-mode-btn {
+            padding: 15px;
+            border: 2px solid var(--lavender);
+            border-radius: 12px;
+            background: var(--surface);
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        .context-mode-btn:hover {
+            background: var(--surface-hover);
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+        
+        .context-mode-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+        
         .milestone-item {
             display: flex;
             align-items: center;
@@ -1448,6 +1475,23 @@
             }
         }
     </style>
+    <script>
+        // Global error handler to catch ALL errors
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; background: red; color: white; padding: 20px; z-index: 99999; font-family: monospace; font-size: 12px;';
+            errorDiv.innerHTML = `
+                <strong>JAVASCRIPT ERROR CAUGHT:</strong><br>
+                Message: ${msg}<br>
+                Line: ${lineNo}<br>
+                Column: ${columnNo}<br>
+                Error: ${error ? error.stack : 'N/A'}<br>
+                <button onclick="this.parentElement.remove()" style="margin-top: 10px; padding: 5px 10px;">Close</button>
+            `;
+            document.body.appendChild(errorDiv);
+            return false;
+        };
+    </script>
 </head>
 <body>
     <div class="container">
@@ -1456,11 +1500,10 @@
         </header>
         
         <div class="view-switcher">
-            <button class="view-btn active" onclick="switchView('today')">Today</button>
-            <button class="view-btn" onclick="switchView('log')">📝 Log</button>
-            <button class="view-btn" onclick="switchView('experiments')">🧪 Projects</button>
+            <button class="view-btn active" onclick="switchView('today')">✅ Habits</button>
             <button class="view-btn" onclick="switchView('stats')">📊 Stats</button>
-            <button class="view-btn" onclick="switchView('badges')">🏅 Badges</button>
+            <button class="view-btn" onclick="switchView('experiments')">🎯 Tasks</button>
+            <button class="view-btn" onclick="switchView('log')">⚖️ Regulation</button>
             <button class="view-btn" onclick="switchView('settings')">⚙️ Settings</button>
         </div>
         
@@ -1504,10 +1547,10 @@
             <!-- Dysregulation Episodes -->
             <div style="background: var(--surface); padding: 20px; border-radius: 16px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h3 style="margin: 0;">⚡ Emotional Dysregulation</h3>
-                    <button class="experiment-btn secondary" onclick="openDysregulationLog()" style="padding: 8px 16px;">+ Log Episode</button>
+                    <h3 style="margin: 0;">⚖️ Regulation Record</h3>
+                    <button class="experiment-btn secondary" onclick="openRegulationLog()" style="padding: 8px 16px;">+ Log Today</button>
                 </div>
-                <div id="dysregulationLogList"></div>
+                <div id="regulationLogList"></div>
             </div>
         </div>
         
@@ -1534,11 +1577,11 @@
                 <div class="form-group">
                     <label class="form-label">Initiation Difficulty (1-5)</label>
                     <div style="display: flex; gap: 10px; justify-content: center; margin-top: 10px;">
-                        <button type="button" onclick="selectInitiation(1)" class="initiation-btn" data-value="1">1<br><span style="font-size:0.7rem;">Easy</span></button>
-                        <button type="button" onclick="selectInitiation(2)" class="initiation-btn" data-value="2">2</button>
-                        <button type="button" onclick="selectInitiation(3)" class="initiation-btn" data-value="3">3<br><span style="font-size:0.7rem;">Medium</span></button>
-                        <button type="button" onclick="selectInitiation(4)" class="initiation-btn" data-value="4">4</button>
-                        <button type="button" onclick="selectInitiation(5)" class="initiation-btn" data-value="5">5<br><span style="font-size:0.7rem;">Very Hard</span></button>
+                        <button type="button" onclick="selectInitiation(1, this)" class="initiation-btn" data-value="1">1<br><span style="font-size:0.7rem;">Easy</span></button>
+                        <button type="button" onclick="selectInitiation(2, this)" class="initiation-btn" data-value="2">2</button>
+                        <button type="button" onclick="selectInitiation(3, this)" class="initiation-btn" data-value="3">3<br><span style="font-size:0.7rem;">Medium</span></button>
+                        <button type="button" onclick="selectInitiation(4, this)" class="initiation-btn" data-value="4">4</button>
+                        <button type="button" onclick="selectInitiation(5, this)" class="initiation-btn" data-value="5">5<br><span style="font-size:0.7rem;">Very Hard</span></button>
                     </div>
                     <input type="hidden" id="taskInitiation" value="3">
                 </div>
@@ -1576,70 +1619,313 @@
             </div>
         </div>
         
-        <!-- Dysregulation Log Modal -->
-        <div id="dysregulationLogModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-title">⚡ Log Emotional Dysregulation</div>
+        <!-- Regulation Log Modal -->
+        <div id="regulationLogModal" class="modal">
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-title">⚖️ Regulation Record</div>
                 
-                <div style="background: var(--bg); padding: 15px; border-radius: 12px; margin-bottom: 20px; font-size: 0.85rem; line-height: 1.6;">
-                    <strong>What counts as emotional dysregulation?</strong>
-                    <ul style="margin: 10px 0; padding-left: 20px;">
-                        <li>Emotional response feels disproportionate to the trigger</li>
-                        <li>Difficulty regulating emotional intensity (too intense or can't feel)</li>
-                        <li>Rapid mood shifts or emotional volatility</li>
-                        <li>Overwhelming emotions that interfere with functioning</li>
-                        <li>RSD (Rejection Sensitive Dysphoria) episodes</li>
-                        <li>Emotional meltdown or shutdown</li>
-                    </ul>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Type of episode</label>
-                    <select id="dysregType" class="form-select">
-                        <option value="">Select type...</option>
-                        <option value="rsd">RSD (Rejection Sensitivity)</option>
-                        <option value="meltdown">Emotional Meltdown</option>
-                        <option value="shutdown">Emotional Shutdown</option>
-                        <option value="disproportionate">Disproportionate Response</option>
-                        <option value="mood_shift">Rapid Mood Shift</option>
-                        <option value="overwhelm">Emotional Overwhelm</option>
-                        <option value="other">Other</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Intensity (1-5)</label>
-                    <div style="display: flex; gap: 10px; justify-content: center; margin-top: 10px;">
-                        <button type="button" onclick="selectDysregIntensity(1)" class="initiation-btn" data-value="1">1<br><span style="font-size:0.7rem;">Mild</span></button>
-                        <button type="button" onclick="selectDysregIntensity(2)" class="initiation-btn" data-value="2">2</button>
-                        <button type="button" onclick="selectDysregIntensity(3)" class="initiation-btn" data-value="3">3<br><span style="font-size:0.7rem;">Moderate</span></button>
-                        <button type="button" onclick="selectDysregIntensity(4)" class="initiation-btn" data-value="4">4</button>
-                        <button type="button" onclick="selectDysregIntensity(5)" class="initiation-btn" data-value="5">5<br><span style="font-size:0.7rem;">Severe</span></button>
+                <!-- Step 1: State & Intensity -->
+                <div id="regStep1">
+                    <div class="form-group">
+                        <label class="form-label">Today's emotional regulation:</label>
+                        <div style="display: grid; gap: 10px; margin-top: 10px;">
+                            <button type="button" onclick="selectRegState('regulated')" class="experiment-btn secondary" id="regStateRegulated" style="padding: 15px; text-align: left;">
+                                ✅ <strong>Regulated</strong><br>
+                                <span style="font-size: 0.8rem; opacity: 0.8;">Managed well, skills worked</span>
+                            </button>
+                            <button type="button" onclick="selectRegState('dysregulated')" class="experiment-btn secondary" id="regStateDysregulated" style="padding: 15px; text-align: left;">
+                                ⚠️ <strong>Dysregulated</strong><br>
+                                <span style="font-size: 0.8rem; opacity: 0.8;">Lost control, patterns kicked in</span>
+                            </button>
+                            <button type="button" onclick="selectRegState('mixed')" class="experiment-btn secondary" id="regStateMixed" style="padding: 15px; text-align: left;">
+                                🟡 <strong>Mixed/Struggled</strong><br>
+                                <span style="font-size: 0.8rem; opacity: 0.8;">Had moments of both</span>
+                            </button>
+                        </div>
+                        <input type="hidden" id="regState" value="">
                     </div>
-                    <input type="hidden" id="dysregIntensity" value="3">
+                    
+                    <div class="form-group">
+                        <label class="form-label">Intensity (1-5)</label>
+                        <div style="display: flex; gap: 8px; justify-content: center; margin-top: 10px;">
+                            <button type="button" onclick="selectRegIntensity(1, this)" class="initiation-btn" data-value="1">1</button>
+                            <button type="button" onclick="selectRegIntensity(2, this)" class="initiation-btn" data-value="2">2</button>
+                            <button type="button" onclick="selectRegIntensity(3, this)" class="initiation-btn" data-value="3">3</button>
+                            <button type="button" onclick="selectRegIntensity(4, this)" class="initiation-btn" data-value="4">4</button>
+                            <button type="button" onclick="selectRegIntensity(5, this)" class="initiation-btn" data-value="5">5</button>
+                        </div>
+                        <input type="hidden" id="regIntensity" value="3">
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 25px;">
+                        <button class="experiment-btn secondary" style="flex: 1;" onclick="closeRegulationLog()">Cancel</button>
+                        <button class="experiment-btn primary" style="flex: 1;" onclick="nextRegStep(2)">Next</button>
+                    </div>
                 </div>
                 
-                <div class="form-group">
-                    <label class="form-label">Trigger (optional - brief note)</label>
-                    <input type="text" id="dysregTrigger" class="form-input" placeholder="e.g., Work email criticism">
+                <!-- Step 2: Patterns (Regulated) -->
+                <div id="regStep2Regulated" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">What contributed to regulation?</label>
+                        <div style="max-height: 300px; overflow-y: auto; padding: 5px;">
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="reg-pattern" value="medication_effective"> Medication effective
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="reg-pattern" value="high_interest"> High interest/engagement
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="reg-pattern" value="good_structure"> Good structure/routine
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="reg-pattern" value="movement"> Movement/exercise
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="reg-pattern" value="caught_early"> Caught emotions early
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="reg-pattern" value="used_strategies"> Used coping strategies
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="reg-pattern" value="wall_of_awful"> Got through Wall of Awful
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="reg-pattern" value="no_triggers"> No major triggers today
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="reg-pattern" value="other"> Other:
+                                <input type="text" id="regPatternOther" class="form-input" style="margin-top: 5px; display: none;" placeholder="Describe...">
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 25px;">
+                        <button class="experiment-btn secondary" style="flex: 1;" onclick="prevRegStep(1)">Back</button>
+                        <button class="experiment-btn primary" style="flex: 1;" onclick="nextRegStep(3)">Next</button>
+                    </div>
                 </div>
                 
-                <div class="form-group">
-                    <label class="form-label">Duration</label>
-                    <select id="dysregDuration" class="form-select">
-                        <option value="<5min">Less than 5 minutes</option>
-                        <option value="5-15min">5-15 minutes</option>
-                        <option value="15-30min">15-30 minutes</option>
-                        <option value="30-60min">30-60 minutes</option>
-                        <option value="1-2hrs">1-2 hours</option>
-                        <option value=">2hrs">More than 2 hours</option>
-                        <option value="ongoing">Still ongoing</option>
-                    </select>
+                <!-- Step 2: Patterns (Dysregulated) -->
+                <div id="regStep2Dysregulated" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">What ADHD patterns showed up?</label>
+                        <div style="max-height: 300px; overflow-y: auto; padding: 5px;">
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="dysreg-pattern" value="rsd"> RSD episode
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="dysreg-pattern" value="0_to_100"> 0-to-100 emotional spike
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="dysreg-pattern" value="frustration"> Frustration intolerance
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="dysreg-pattern" value="boredom"> Boredom dysregulation
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="dysreg-pattern" value="task_paralysis"> Task paralysis (Wall of Awful)
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="dysreg-pattern" value="no_skills"> Couldn't access skills
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="dysreg-pattern" value="stuck_activated"> Stuck activated (couldn't calm)
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="dysreg-pattern" value="impulsivity"> Emotional impulsivity
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="dysreg-pattern" value="exec_dysfunction"> Executive function collapsed
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="dysreg-pattern" value="time_blindness"> Time blindness made it worse
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="dysreg-pattern" value="other"> Other:
+                                <input type="text" id="dysregPatternOther" class="form-input" style="margin-top: 5px; display: none;" placeholder="Describe...">
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 25px;">
+                        <button class="experiment-btn secondary" style="flex: 1;" onclick="prevRegStep(1)">Back</button>
+                        <button class="experiment-btn primary" style="flex: 1;" onclick="nextRegStep(3)">Next</button>
+                    </div>
                 </div>
                 
-                <div style="display: flex; gap: 10px; margin-top: 25px;">
-                    <button class="experiment-btn secondary" style="flex: 1;" onclick="closeDysregulationLog()">Cancel</button>
-                    <button class="experiment-btn primary" style="flex: 1;" onclick="saveDysregulationLog()">Save</button>
+                <!-- Step 2: Patterns (Mixed) -->
+                <div id="regStep2Mixed" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">What happened today?</label>
+                        <div style="max-height: 300px; overflow-y: auto; padding: 5px;">
+                            <p style="font-weight: 600; margin: 10px 0 5px 0; font-size: 0.9rem;">Regulated moments:</p>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="mixed-pattern" value="used_strategies"> Used coping strategies
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="mixed-pattern" value="caught_early"> Caught emotions early sometimes
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="mixed-pattern" value="stable_periods"> Had periods of stability
+                            </label>
+                            
+                            <p style="font-weight: 600; margin: 15px 0 5px 0; font-size: 0.9rem;">Dysregulated moments:</p>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="mixed-pattern" value="rsd"> RSD episode
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="mixed-pattern" value="0_to_100"> 0-to-100 spike
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="mixed-pattern" value="frustration"> Frustration intolerance
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="mixed-pattern" value="no_skills"> Couldn't access skills
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="mixed-pattern" value="impulsivity"> Emotional impulsivity
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="mixed-pattern" value="other"> Other:
+                                <input type="text" id="mixedPatternOther" class="form-input" style="margin-top: 5px; display: none;" placeholder="Describe...">
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 25px;">
+                        <button class="experiment-btn secondary" style="flex: 1;" onclick="prevRegStep(1)">Back</button>
+                        <button class="experiment-btn primary" style="flex: 1;" onclick="nextRegStep(3)">Next</button>
+                    </div>
+                </div>
+                
+                <!-- Step 3: Physical (only for dysregulated/mixed) -->
+                <div id="regStep3Physical" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">Physical/Somatic Experience</label>
+                        <div style="max-height: 250px; overflow-y: auto; padding: 5px;">
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="physical" value="anxiety"> Anxiety (racing heart, tight chest)
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="physical" value="tension"> Tension (muscle tightness, clenching)
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="physical" value="gi_distress"> GI distress (nausea, stomach issues)
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="physical" value="fatigue"> Fatigue/heaviness
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="physical" value="numbness"> Numbness/dissociation
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="physical" value="activation"> Activation/jitteriness
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="physical" value="shutdown"> Shutdown (low energy, can't move)
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="physical" value="restless_exhausted"> Restless but exhausted
+                            </label>
+                            <label style="display: block; margin: 8px 0; cursor: pointer;">
+                                <input type="checkbox" class="physical" value="other"> Other:
+                                <input type="text" id="physicalOther" class="form-input" style="margin-top: 5px; display: none;" placeholder="Describe...">
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 25px;">
+                        <button class="experiment-btn secondary" style="flex: 1;" onclick="prevRegStep(2)">Back</button>
+                        <button class="experiment-btn primary" style="flex: 1;" onclick="nextRegStep(4)">Next</button>
+                    </div>
+                </div>
+                
+                <!-- Step 4: Coping (for all states) -->
+                <div id="regStep4Coping" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">What helped today?</label>
+                        <div style="max-height: 200px; overflow-y: auto; padding: 5px; margin-bottom: 15px;">
+                            <label style="display: block; margin: 6px 0; cursor: pointer; font-size: 0.9rem;">
+                                <input type="checkbox" class="helped" value="medication"> Medication
+                            </label>
+                            <label style="display: block; margin: 6px 0; cursor: pointer; font-size: 0.9rem;">
+                                <input type="checkbox" class="helped" value="breathwork"> Breath work
+                            </label>
+                            <label style="display: block; margin: 6px 0; cursor: pointer; font-size: 0.9rem;">
+                                <input type="checkbox" class="helped" value="exercise"> Exercise/movement
+                            </label>
+                            <label style="display: block; margin: 6px 0; cursor: pointer; font-size: 0.9rem;">
+                                <input type="checkbox" class="helped" value="crying"> Crying or venting
+                            </label>
+                            <label style="display: block; margin: 6px 0; cursor: pointer; font-size: 0.9rem;">
+                                <input type="checkbox" class="helped" value="eating"> Eating
+                            </label>
+                            <label style="display: block; margin: 6px 0; cursor: pointer; font-size: 0.9rem;">
+                                <input type="checkbox" class="helped" value="talking"> Talking to someone
+                            </label>
+                            <label style="display: block; margin: 6px 0; cursor: pointer; font-size: 0.9rem;">
+                                <input type="checkbox" class="helped" value="time_alone"> Time alone
+                            </label>
+                            <label style="display: block; margin: 6px 0; cursor: pointer; font-size: 0.9rem;">
+                                <input type="checkbox" class="helped" value="nature"> Nature/outdoors
+                            </label>
+                            <label style="display: block; margin: 6px 0; cursor: pointer; font-size: 0.9rem;">
+                                <input type="checkbox" class="helped" value="creative"> Creative outlet
+                            </label>
+                            <label style="display: block; margin: 6px 0; cursor: pointer; font-size: 0.9rem;">
+                                <input type="checkbox" class="helped" value="structure"> Structure/routine
+                            </label>
+                            <label style="display: block; margin: 6px 0; cursor: pointer; font-size: 0.9rem;">
+                                <input type="checkbox" class="helped" value="nothing"> Nothing helped
+                            </label>
+                            <label style="display: block; margin: 6px 0; cursor: pointer; font-size: 0.9rem;">
+                                <input type="checkbox" class="helped" value="other"> Other:
+                                <input type="text" id="helpedOther" class="form-input" style="margin-top: 5px; display: none;" placeholder="Describe...">
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">What made it worse?</label>
+                        <div style="max-height: 200px; overflow-y: auto; padding: 5px;">
+                            <label style="display: block; margin: 6px 0; cursor: pointer; font-size: 0.9rem;">
+                                <input type="checkbox" class="worse" value="meds_off"> Medication wore off/skipped
+                            </label>
+                            <label style="display: block; margin: 6px 0; cursor: pointer; font-size: 0.9rem;">
+                                <input type="checkbox" class="worse" value="boredom"> Boredom/understimulation
+                            </label>
+                            <label style="display: block; margin: 6px 0; cursor: pointer; font-size: 0.9rem;">
+                                <input type="checkbox" class="worse" value="frustrating_task"> Frustrating task
+                            </label>
+                            <label style="display: block; margin: 6px 0; cursor: pointer; font-size: 0.9rem;">
+                                <input type="checkbox" class="worse" value="criticism"> Criticism/rejection
+                            </label>
+                            <label style="display: block; margin: 6px 0; cursor: pointer; font-size: 0.9rem;">
+                                <input type="checkbox" class="worse" value="no_structure"> Lack of structure
+                            </label>
+                            <label style="display: block; margin: 6px 0; cursor: pointer; font-size: 0.9rem;">
+                                <input type="checkbox" class="worse" value="too_many_demands"> Too many demands
+                            </label>
+                            <label style="display: block; margin: 6px 0; cursor: pointer; font-size: 0.9rem;">
+                                <input type="checkbox" class="worse" value="poor_sleep"> Poor sleep
+                            </label>
+                            <label style="display: block; margin: 6px 0; cursor: pointer; font-size: 0.9rem;">
+                                <input type="checkbox" class="worse" value="hunger"> Hunger/low blood sugar
+                            </label>
+                            <label style="display: block; margin: 6px 0; cursor: pointer; font-size: 0.9rem;">
+                                <input type="checkbox" class="worse" value="overstimulation"> Overstimulation
+                            </label>
+                            <label style="display: block; margin: 6px 0; cursor: pointer; font-size: 0.9rem;">
+                                <input type="checkbox" class="worse" value="other"> Other:
+                                <input type="text" id="worseOther" class="form-input" style="margin-top: 5px; display: none;" placeholder="Describe...">
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 25px;">
+                        <button class="experiment-btn secondary" style="flex: 1;" onclick="prevRegStep(3)">Back</button>
+                        <button class="experiment-btn primary" style="flex: 1;" onclick="saveRegulationLog()">Save</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1736,7 +2022,152 @@
         
         <!-- EXPERIMENTS VIEW -->
         <div id="experimentsView" class="section" style="display:none;">
-            <div style="margin-bottom: 25px;">
+            <!-- ADHD TASK SORTER -->
+            <div style="margin-bottom: 40px;">
+                <h2 style="font-size: 1.5rem; margin-bottom: 10px; color: var(--accent);">🧠 ADHD Task Sorter</h2>
+                <p style="color: var(--text-dim); margin-bottom: 20px; font-size: 0.9rem;">Dump everything, rate it, see what you can actually do</p>
+                
+                <!-- Step 1: Brain Dump Interface -->
+                <div id="brainDumpStep" style="background: var(--surface); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                    <label style="font-weight: 600; display: block; margin-bottom: 10px; color: var(--accent);">Step 1: Brain Dump</label>
+                    <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 10px;">Type or paste everything bouncing around. One task per line.</p>
+                    <textarea id="brainDump" style="width: 100%; min-height: 150px; padding: 15px; border: 2px solid var(--lavender); border-radius: 8px; font-family: inherit; font-size: 1rem; resize: vertical;" placeholder="Example:
+Learn Python
+Email professor back
+Start that assignment
+Learn graphic design
+File taxes
+Read that book
+
+One per line..."></textarea>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button onclick="startRating()" class="experiment-btn primary" style="flex: 1;">Rate These Tasks →</button>
+                        <button onclick="clearEverything()" class="experiment-btn secondary">Clear</button>
+                    </div>
+                    
+                    <details style="margin-top: 15px;">
+                        <summary style="cursor: pointer; padding: 10px; background: var(--bg); border-radius: 8px; font-size: 0.85rem; color: var(--accent);">
+                            💾 View Saved Task Ratings (<span id="memoryCount">0</span> tasks remembered)
+                        </summary>
+                        <div id="taskMemoryList" style="margin-top: 10px; padding: 15px; background: var(--bg); border-radius: 8px; max-height: 300px; overflow-y: auto;"></div>
+                    </details>
+                </div>
+                
+                <!-- Step 2: Rate Tasks (hidden initially) -->
+                <div id="ratingStep" style="display: none; background: var(--surface); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <div>
+                            <label style="font-weight: 600; display: block; color: var(--accent);">Step 2: Rate Your Tasks</label>
+                            <p style="font-size: 0.85rem; color: var(--text-dim); margin-top: 5px;" id="ratingProgress">Task 1 of X</p>
+                        </div>
+                        <button onclick="skipRating()" class="experiment-btn secondary" style="font-size: 0.85rem; padding: 8px 12px;">Skip All →</button>
+                    </div>
+                    
+                    <div id="currentTaskRating"></div>
+                </div>
+                
+                <!-- Step 3: Filter & View -->
+                <div id="filterStep" style="display: none; background: var(--surface); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                    <label style="font-weight: 600; display: block; margin-bottom: 15px; color: var(--accent);">Step 3: What Can You Do Right Now?</label>
+                    
+                    <div style="margin-bottom: 20px; padding: 15px; background: var(--bg); border-radius: 8px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 10px;">⚡ How's your energy RIGHT NOW?</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                            <button onclick="setEnergy('low')" id="energyBtn-low" class="context-mode-btn" style="padding: 12px; font-size: 0.9rem;">
+                                😴 Low
+                                <span style="font-size: 0.7rem; display: block; opacity: 0.8;">Tired/drained</span>
+                            </button>
+                            <button onclick="setEnergy('medium')" id="energyBtn-medium" class="context-mode-btn active" style="padding: 12px; font-size: 0.9rem;">
+                                😐 Medium
+                                <span style="font-size: 0.7rem; display: block; opacity: 0.8;">Normal/OK</span>
+                            </button>
+                            <button onclick="setEnergy('high')" id="energyBtn-high" class="context-mode-btn" style="padding: 12px; font-size: 0.9rem;">
+                                ⚡ High
+                                <span style="font-size: 0.7rem; display: block; opacity: 0.8;">Energized!</span>
+                            </button>
+                        </div>
+                        <p id="energyHint" style="font-size: 0.75rem; color: var(--text-dim); margin-top: 10px; font-style: italic;"></p>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 10px;">Quick Filters:</p>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;">
+                            <button onclick="applyQuickFilter('fun')" class="context-mode-btn" style="padding: 10px; font-size: 0.85rem;">🎮 Fun Only</button>
+                            <button onclick="applyQuickFilter('quickwins')" class="context-mode-btn" style="padding: 10px; font-size: 0.85rem;">🏃 Quick Wins</button>
+                            <button onclick="applyQuickFilter('lowenergy')" class="context-mode-btn" style="padding: 10px; font-size: 0.85rem;">😴 Low Energy</button>
+                            <button onclick="applyQuickFilter('learning')" class="context-mode-btn" style="padding: 10px; font-size: 0.85rem;">🧠 Learning</button>
+                            <button onclick="applyQuickFilter('crisis')" class="context-mode-btn" style="padding: 10px; font-size: 0.85rem;">🚨 Crisis Mode</button>
+                            <button onclick="applyQuickFilter('all')" class="context-mode-btn" style="padding: 10px; font-size: 0.85rem;">📋 Show All</button>
+                        </div>
+                    </div>
+                    
+                    <details style="margin-bottom: 15px;">
+                        <summary style="cursor: pointer; font-weight: 600; color: var(--accent); padding: 10px; background: var(--bg); border-radius: 8px;">🔍 Advanced Filters (click to expand)</summary>
+                        <div style="padding: 15px; margin-top: 10px; background: var(--bg); border-radius: 8px;">
+                            <div style="margin-bottom: 15px;">
+                                <label style="font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 8px;">⚡ Interest Level:</label>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <label style="font-size: 0.8rem;"><input type="checkbox" class="filter-interest" value="5"> Very High (5)</label>
+                                    <label style="font-size: 0.8rem;"><input type="checkbox" class="filter-interest" value="4"> High (4)</label>
+                                    <label style="font-size: 0.8rem;"><input type="checkbox" class="filter-interest" value="3"> Medium (3)</label>
+                                    <label style="font-size: 0.8rem;"><input type="checkbox" class="filter-interest" value="2"> Low (2)</label>
+                                    <label style="font-size: 0.8rem;"><input type="checkbox" class="filter-interest" value="1"> Very Low (1)</label>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 15px;">
+                                <label style="font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 8px;">🚧 Resistance Level:</label>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <label style="font-size: 0.8rem;"><input type="checkbox" class="filter-resistance" value="0-2"> Easy (0-2)</label>
+                                    <label style="font-size: 0.8rem;"><input type="checkbox" class="filter-resistance" value="3"> Some Wall (3)</label>
+                                    <label style="font-size: 0.8rem;"><input type="checkbox" class="filter-resistance" value="4-5"> Major Wall (4-5)</label>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 15px;">
+                                <label style="font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 8px;">⏰ Time Available:</label>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <label style="font-size: 0.8rem;"><input type="checkbox" class="filter-time" value="quick"> 5-15min</label>
+                                    <label style="font-size: 0.8rem;"><input type="checkbox" class="filter-time" value="medium"> 30-60min</label>
+                                    <label style="font-size: 0.8rem;"><input type="checkbox" class="filter-time" value="long"> 1-3hrs</label>
+                                    <label style="font-size: 0.8rem;"><input type="checkbox" class="filter-time" value="verylong"> 3+ hrs</label>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 15px;">
+                                <label style="font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 8px;">💪 Energy Level:</label>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <label style="font-size: 0.8rem;"><input type="checkbox" class="filter-energy" value="low"> Low Effort (1-2)</label>
+                                    <label style="font-size: 0.8rem;"><input type="checkbox" class="filter-energy" value="medium"> Medium (3)</label>
+                                    <label style="font-size: 0.8rem;"><input type="checkbox" class="filter-energy" value="high"> High (4-5)</label>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; gap: 10px;">
+                                <button onclick="applyAdvancedFilters()" class="experiment-btn primary" style="flex: 1;">Apply Filters</button>
+                                <button onclick="clearAdvancedFilters()" class="experiment-btn secondary">Clear</button>
+                            </div>
+                        </div>
+                    </details>
+                </div>
+                
+                <!-- Results: Smart Recommendations -->
+                <div id="recommendationsSection" style="display: none;">
+                    <h3 style="font-size: 1.2rem; margin-bottom: 15px; color: var(--accent);">🎯 START HERE</h3>
+                    <div id="smartRecommendations"></div>
+                </div>
+                
+                <!-- Results: All Tasks Categorized -->
+                <div id="sortedTasksSection" style="display: none; margin-top: 30px;">
+                    <h3 style="font-size: 1.2rem; margin-bottom: 15px; color: var(--accent);">All Your Tasks</h3>
+                    <div id="momentumBuilders" style="margin-bottom: 20px;"></div>
+                    <div id="mediumEffort" style="margin-bottom: 20px;"></div>
+                    <div id="highResistance" style="margin-bottom: 20px;"></div>
+                </div>
+            </div>
+            
+            <div style="border-top: 3px solid var(--lavender); padding-top: 30px; margin-top: 30px;">
                 <h2 style="font-size: 1.5rem; margin-bottom: 10px; color: var(--accent);">🧪 Active Projects</h2>
                 <p style="color: var(--text-dim); margin-bottom: 20px; font-size: 0.9rem;">Track your experiments and long-term goals</p>
                 <div id="activeExperiments"></div>
@@ -1802,6 +2233,38 @@
         
         <!-- STATS VIEW -->
         <div id="statsView" class="section">
+            <!-- Quick Snapshot Dashboard -->
+            <div style="background: var(--surface); padding: 20px; border-radius: 16px; margin-bottom: 30px; border: 2px solid var(--lavender); box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                <h2 style="font-size: 1.5rem; margin-bottom: 15px; color: var(--accent);">📊 YOUR DASHBOARD</h2>
+                <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 20px;" id="dashboardDate"></p>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                    <div style="text-align: center; padding: 15px; background: var(--bg); border-radius: 12px;">
+                        <div style="font-size: 2rem; margin-bottom: 5px;">🔥</div>
+                        <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 3px;">Current Streak</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent);" id="snapStreak">-</div>
+                    </div>
+                    
+                    <div style="text-align: center; padding: 15px; background: var(--bg); border-radius: 12px;">
+                        <div style="font-size: 2rem; margin-bottom: 5px;">⚖️</div>
+                        <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 3px;">Today's Regulation</div>
+                        <div style="font-size: 1rem; font-weight: 600; color: var(--accent);" id="snapRegulation">Not logged</div>
+                    </div>
+                    
+                    <div style="text-align: center; padding: 15px; background: var(--bg); border-radius: 12px;">
+                        <div style="font-size: 2rem; margin-bottom: 5px;">💪</div>
+                        <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 3px;">This Week</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent);" id="snapWeekly">-%</div>
+                    </div>
+                    
+                    <div style="text-align: center; padding: 15px; background: var(--bg); border-radius: 12px;">
+                        <div style="font-size: 2rem; margin-bottom: 5px;">🏆</div>
+                        <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 3px;">Best Streak</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent);" id="snapBest">-</div>
+                    </div>
+                </div>
+            </div>
+            
             <!-- Three Donut Charts -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px;">
                 <!-- Option A: Circular Heatmap -->
@@ -1853,11 +2316,18 @@
                 <div id="projectsProgressWidget"></div>
             </div>
             
+            <!-- Regulation Record Heatmap -->
+            <div style="margin-bottom: 30px;">
+                <h2 style="font-size: 1.5rem; margin-bottom: 15px; color: var(--accent);">⚖️ Regulation Record</h2>
+                <p style="color: var(--text-dim); margin-bottom: 15px; font-size: 0.9rem;">Last 30 days</p>
+                <div id="regulationHeatmap"></div>
+            </div>
+            
             <div class="goal-stats" id="goalStats"></div>
         </div>
         
         <!-- BADGES VIEW -->
-        <div id="badgesView" class="section">
+        <div id="badgesView" class="section" style="display:none;">
             <!-- Achievement Badges -->
             <div style="margin-bottom: 30px;">
                 <h2 style="font-size: 1.5rem; margin-bottom: 10px; color: var(--accent);">🏅 Your Achievements</h2>
@@ -2006,13 +2476,19 @@
                     sequence: ["Music", "Coffee"],
                     timestamp: "14:30"
                 }],
-                dysregulation: [{
-                    type: "rsd" | "meltdown" | "shutdown" | etc,
+                regulation: {
+                    state: "regulated" | "dysregulated" | "mixed",
                     intensity: 1-5,
-                    trigger: "Brief note",
-                    duration: "<5min" | "5-15min" | etc,
+                    patterns: ["rsd", "0_to_100", ...],
+                    other_pattern: "text",
+                    physical: ["anxiety", "tension", ...],
+                    other_physical: "text",
+                    helped: ["medication", "exercise", ...],
+                    other_helped: "text",
+                    worse: ["meds_off", "boredom", ...],
+                    other_worse: "text",
                     timestamp: "16:45"
-                }]
+                }
             }
         }
         */
@@ -2771,9 +3247,9 @@
                 const target = metadata.frequencyTarget || 3;
                 const progress = (count / target) * 100;
                 const status = count >= target ? 'exceeded' : count >= target * 0.8 ? 'on-track' : 'behind';
-                const statusText = count >= target ? '✅ Target met!' : 
-                                  count >= target * 0.8 ? '✓ On track' :
-                                  `⚠️ Need ${target - count} more`;
+                const statusText = count >= target ? 'Target met!' : 
+                                  count >= target * 0.8 ? 'On track' :
+                                  `Need ${target - count} more`;
                 
                 return { goal, index, count, target, progress: Math.min(progress, 100), status, statusText };
             }).filter(Boolean);
@@ -2841,12 +3317,12 @@
                 const daysSinceUpdate = Math.floor((new Date() - new Date(lastCheckIn)) / (1000 * 60 * 60 * 24));
                 
                 let warningClass = '';
-                let updateText = daysSinceUpdate === 0 ? '✅ Updated today' :
+                let updateText = daysSinceUpdate === 0 ? 'Updated today' :
                                 daysSinceUpdate === 1 ? 'Updated yesterday' :
                                 `${daysSinceUpdate} days ago`;
                 
-                if (daysSinceUpdate >= 14) { warningClass = 'alert'; updateText = '⚠️ ' + updateText; }
-                else if (daysSinceUpdate >= 7) { warningClass = 'warning'; updateText = '⚠️ ' + updateText; }
+                if (daysSinceUpdate >= 14) { warningClass = 'alert'; updateText = 'WARNING: ' + updateText; }
+                else if (daysSinceUpdate >= 7) { warningClass = 'warning'; updateText = 'NOTICE: ' + updateText; }
                 
                 const categoryEmoji = { learning: '📚', career: '💼', creative: '🎨', writing: '📝', fitness: '🏃', other: '✨' };
                 
@@ -2883,8 +3359,140 @@
             widget.innerHTML = html;
         }
         
+        // Render Regulation Heatmap
+        function renderRegulationHeatmap() {
+            const widget = document.getElementById('regulationHeatmap');
+            if (!widget) return;
+            
+            const today = new Date();
+            const days = [];
+            
+            // Get last 30 days
+            for (let i = 29; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(today.getDate() - i);
+                const dateKey = date.toISOString().split('T')[0];
+                const log = dailyLogs[dateKey];
+                const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                const dayNum = date.getDate();
+                
+                let color = '#e0e0e0'; // No data (gray)
+                let label = 'No data';
+                
+                if (log && log.regulation) {
+                    const reg = log.regulation;
+                    const intensity = reg.intensity;
+                    
+                    if (reg.state === 'regulated') {
+                        const greenShades = ['#c8e6c9', '#a5d6a7', '#81c784', '#66bb6a', '#4caf50'];
+                        color = greenShades[intensity - 1];
+                        label = `Regulated (${intensity}/5)`;
+                    } else if (reg.state === 'dysregulated') {
+                        const redShades = ['#ffcdd2', '#ef9a9a', '#e57373', '#ef5350', '#f44336'];
+                        color = redShades[intensity - 1];
+                        label = `Dysregulated (${intensity}/5)`;
+                    } else if (reg.state === 'mixed') {
+                        const yellowShades = ['#fff9c4', '#fff59d', '#fff176', '#ffee58', '#ffeb3b'];
+                        color = yellowShades[intensity - 1];
+                        label = `Mixed (${intensity}/5)`;
+                    }
+                }
+                
+                days.push({ date: dateKey, dayName, dayNum, color, label });
+            }
+            
+            let html = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(35px, 1fr)); gap: 5px;">';
+            
+            days.forEach(day => {
+                html += `
+                    <div style="
+                        background: ${day.color};
+                        aspect-ratio: 1;
+                        border-radius: 4px;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 0.7rem;
+                        cursor: help;
+                        position: relative;
+                    " title="${day.date}: ${day.label}">
+                        <div style="font-weight: 600;">${day.dayNum}</div>
+                        <div style="font-size: 0.6rem; opacity: 0.7;">${day.dayName}</div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            
+            html += `
+                <div style="margin-top: 20px; display: flex; gap: 20px; flex-wrap: wrap; font-size: 0.85rem;">
+                    <div><span style="display:inline-block;width:12px;height:12px;background:#4caf50;border-radius:2px;margin-right:5px;"></span> Regulated</div>
+                    <div><span style="display:inline-block;width:12px;height:12px;background:#ffeb3b;border-radius:2px;margin-right:5px;"></span> Mixed</div>
+                    <div><span style="display:inline-block;width:12px;height:12px;background:#f44336;border-radius:2px;margin-right:5px;"></span> Dysregulated</div>
+                    <div><span style="display:inline-block;width:12px;height:12px;background:#e0e0e0;border-radius:2px;margin-right:5px;"></span> No Data</div>
+                    <div style="color:var(--text-dim);font-size:0.75rem;">Darker = more severe/stable</div>
+                </div>
+            `;
+            
+            widget.innerHTML = html;
+        }
+        
+        // Update Stats Dashboard Snapshot
+        function updateSnapshot() {
+            const today = getTodayKey();
+            const todayDate = new Date();
+            document.getElementById('dashboardDate').textContent = todayDate.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                month: 'long', 
+                day: 'numeric', 
+                year: 'numeric' 
+            });
+            
+            // Current streak (calculate from first goal as proxy)
+            const streak = goals.length > 0 ? calculateStreak(0) : 0;
+            document.getElementById('snapStreak').textContent = streak + ' days';
+            
+            // Today's regulation
+            const log = dailyLogs[today];
+            let regText = 'Not logged';
+            if (log && log.regulation) {
+                const stateEmoji = {
+                    regulated: '✅',
+                    dysregulated: '⚠️',
+                    mixed: '🟡'
+                };
+                regText = (stateEmoji[log.regulation.state] || '') + ' ' + log.regulation.state.charAt(0).toUpperCase() + log.regulation.state.slice(1);
+            }
+            document.getElementById('snapRegulation').innerHTML = regText + '<div style="font-size:0.7rem; margin-top:3px;"><a href="#" onclick="switchView(\'log\'); return false;" style="color:var(--accent);">Log now</a></div>';
+            
+            // This week completion %
+            const weekStart = new Date(todayDate);
+            weekStart.setDate(todayDate.getDate() - todayDate.getDay());
+            let weekTotal = 0;
+            let weekCompleted = 0;
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(weekStart);
+                date.setDate(weekStart.getDate() + i);
+                const dateKey = date.toISOString().split('T')[0];
+                if (data[dateKey]) {
+                    weekTotal += goals.length;
+                    weekCompleted += data[dateKey].filter(Boolean).length;
+                }
+            }
+            const weekPct = weekTotal > 0 ? Math.round((weekCompleted / weekTotal) * 100) : 0;
+            document.getElementById('snapWeekly').textContent = weekPct + '%';
+            
+            // Best streak
+            const bestStreak = goals.length > 0 ? calculateBestStreak(0) : 0;
+            document.getElementById('snapBest').textContent = bestStreak + ' days';
+        }
+        
         // Render Stats view
         function renderStats() {
+            // Update snapshot dashboard
+            updateSnapshot();
+            
             // Render category and goal filter checkboxes
             renderCategoryFilter();
             renderGoalFilter();
@@ -2896,6 +3504,7 @@
             
             // Render projects progress
             renderProjectsProgress();
+            renderRegulationHeatmap();
             
             const goalStats = document.getElementById('goalStats');
             goalStats.innerHTML = '';
@@ -3691,8 +4300,6 @@
                 goalMetadata: goalMetadata,
                 experiments: experiments,
                 dailyLogs: dailyLogs,
-                energyTracking: energyTracking,
-                adhdDocuments: adhdDocuments,
                 userProgress: userProgress,
                 exportDate: new Date().toISOString(),
                 version: '2.0'
@@ -3710,7 +4317,7 @@
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
             
-            alert('✅ Data exported successfully! Includes habits, projects, and logs.');
+            alert('Data exported successfully! Includes habits, projects, and logs.');
         }
         
         // Import data from JSON file
@@ -3725,7 +4332,7 @@
                     
                     // Validate the data structure
                     if (!importedData.goals || !importedData.data) {
-                        alert('❌ Invalid backup file format.');
+                        alert('Invalid backup file format.');
                         return;
                     }
                     
@@ -3736,17 +4343,15 @@
                         goalMetadata = importedData.goalMetadata || {};
                         experiments = importedData.experiments || [];
                         dailyLogs = importedData.dailyLogs || {};
-                        energyTracking = importedData.energyTracking || energyTracking;
-                        adhdDocuments = importedData.adhdDocuments || adhdDocuments;
                         userProgress = importedData.userProgress || userProgress;
                         
                         saveData();
                         
-                        alert('✅ Data imported successfully! Includes habits, projects, and logs. Refreshing...');
+                        alert('Data imported successfully! Includes habits, projects, and logs. Refreshing...');
                         location.reload();
                     }
                 } catch (error) {
-                    alert('❌ Error reading backup file. Make sure it\'s a valid Life Dashboard backup.');
+                    alert('Error reading backup file. Make sure it\'s a valid Life Dashboard backup.');
                     console.error('Import error:', error);
                 }
             };
@@ -3836,12 +4441,23 @@
             document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
             document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(view + 'View').style.display = 'block';
-            event.target.classList.add('active');
+            
+            // Find and activate the clicked button
+            const buttons = document.querySelectorAll('.view-btn');
+            buttons.forEach(btn => {
+                if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(`'${view}'`)) {
+                    btn.classList.add('active');
+                }
+            });
             
             if (view === 'stats') renderStats();
             if (view === 'settings') renderSettings();
-            if (view === 'badges') renderBadges();
-            if (view === 'experiments') renderExperiments();
+            if (view === 'experiments') {
+                renderExperiments();
+                if (typeof updateMemoryDisplay === 'function') {
+                    updateMemoryDisplay(); // Show saved task memories
+                }
+            }
             if (view === 'log') renderDailyLog();
         }
         
@@ -3851,7 +4467,7 @@
             if (!dailyLogs[date]) {
                 dailyLogs[date] = {
                     tasks: [],
-                    dysregulation: []
+                    regulation: null
                 };
             }
         }
@@ -3946,44 +4562,8 @@
                 }).join('');
             }
             
-            // Render dysregulation
-            const dysregList = document.getElementById('dysregulationLogList');
-            if (!dysregList) return;
-            
-            if (log.dysregulation.length === 0) {
-                dysregList.innerHTML = '<p style="text-align:center;color:var(--text-dim);padding:20px;">No episodes logged</p>';
-            } else {
-                dysregList.innerHTML = log.dysregulation.map((episode, idx) => {
-                    const typeLabels = {
-                        rsd: 'RSD (Rejection Sensitivity)',
-                        meltdown: 'Emotional Meltdown',
-                        shutdown: 'Emotional Shutdown',
-                        disproportionate: 'Disproportionate Response',
-                        mood_shift: 'Rapid Mood Shift',
-                        overwhelm: 'Emotional Overwhelm',
-                        other: 'Other'
-                    };
-                    
-                    const filled = String.fromCharCode(9608);
-                    const empty = String.fromCharCode(9617);
-                    const intensityBar = filled.repeat(episode.intensity) + empty.repeat((5 - episode.intensity));
-                    
-                    return `
-                        <div style="background: var(--bg); padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 3px solid #ff6b9d;">
-                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
-                                <strong style="flex: 1;">${typeLabels[episode.type]}</strong>
-                                <button onclick="deleteDysregulation(${idx})" style="background: transparent; border: none; color: var(--text-dim); cursor: pointer; padding: 0 5px;">✕</button>
-                            </div>
-                            <div style="font-size: 0.85rem; color: var(--text-dim); line-height: 1.6;">
-                                <div>Intensity: ${episode.intensity}/5 ${intensityBar}</div>
-                                <div>Duration: ${episode.duration}</div>
-                                ${episode.trigger ? `<div>Trigger: ${episode.trigger}</div>` : ''}
-                                <div style="margin-top: 5px; opacity: 0.7;">Logged at ${episode.timestamp}</div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
+            // Render regulation
+            renderRegulation(log);
             
             updateLogNextButton();
         }
@@ -4009,10 +4589,12 @@
             document.getElementById('taskLogModal').classList.remove('active');
         }
 
-        function selectInitiation(value) {
+        function selectInitiation(value, element) {
             document.getElementById('taskInitiation').value = value;
             document.querySelectorAll('#taskLogModal .initiation-btn').forEach(btn => btn.classList.remove('selected'));
-            event.target.closest('.initiation-btn').classList.add('selected');
+            if (element) {
+                element.closest('.initiation-btn').classList.add('selected');
+            }
             
             // Show/hide sequence options if difficulty >= 3
             document.getElementById('initiationSequenceGroup').style.display = value >= 3 ? 'block' : 'none';
@@ -4056,58 +4638,372 @@
         }
 
         // Dysregulation Log functions
-        function openDysregulationLog() {
-            document.getElementById('dysregulationLogModal').classList.add('active');
-            document.getElementById('dysregType').value = '';
-            document.getElementById('dysregIntensity').value = '3';
-            document.getElementById('dysregTrigger').value = '';
-            document.getElementById('dysregDuration').value = '5-15min';
-            
-            // Reset intensity buttons
-            document.querySelectorAll('#dysregulationLogModal .initiation-btn').forEach(btn => btn.classList.remove('selected'));
-            const btn3 = document.querySelector('#dysregulationLogModal .initiation-btn[data-value="3"]');
-            if (btn3) btn3.classList.add('selected');
-        }
+// REGULATION TRACKER FUNCTIONS
 
-        function closeDysregulationLog() {
-            document.getElementById('dysregulationLogModal').classList.remove('active');
-        }
+let currentRegStep = 1;
+let currentRegState = '';
 
-        function selectDysregIntensity(value) {
-            document.getElementById('dysregIntensity').value = value;
-            document.querySelectorAll('#dysregulationLogModal .initiation-btn').forEach(btn => btn.classList.remove('selected'));
-            event.target.closest('.initiation-btn').classList.add('selected');
-        }
+function openRegulationLog() {
+    document.getElementById('regulationLogModal').classList.add('active');
+    currentRegStep = 1;
+    currentRegState = '';
+    
+    // Reset all fields
+    document.getElementById('regState').value = '';
+    document.getElementById('regIntensity').value = '3';
+    
+    // Reset all checkboxes
+    document.querySelectorAll('.reg-pattern, .dysreg-pattern, .mixed-pattern, .physical, .helped, .worse').forEach(cb => cb.checked = false);
+    document.querySelectorAll('#regPatternOther, #dysregPatternOther, #mixedPatternOther, #physicalOther, #helpedOther, #worseOther').forEach(input => {
+        input.value = '';
+        input.style.display = 'none';
+    });
+    
+    // Reset state buttons
+    document.querySelectorAll('#regStateRegulated, #regStateDysregulated, #regStateMixed').forEach(btn => {
+        btn.style.background = '';
+        btn.style.border = '';
+    });
+    
+    // Reset intensity buttons
+    document.querySelectorAll('#regulationLogModal .initiation-btn').forEach(btn => btn.classList.remove('selected'));
+    const btn3 = document.querySelector('#regulationLogModal .initiation-btn[data-value="3"]');
+    if (btn3) btn3.classList.add('selected');
+    
+    // Show only step 1
+    showRegStep(1);
+}
 
-        function saveDysregulationLog() {
-            const type = document.getElementById('dysregType').value;
-            const intensity = parseInt(document.getElementById('dysregIntensity').value);
-            const trigger = document.getElementById('dysregTrigger').value.trim();
-            const duration = document.getElementById('dysregDuration').value;
-            
-            if (!type) { alert('Please select episode type'); return; }
-            
-            initLog(currentLogDate);
-            dailyLogs[currentLogDate].dysregulation.push({
-                type,
-                intensity,
-                trigger,
-                duration,
-                timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-            });
-            
-            saveData();
-            closeDysregulationLog();
-            renderDailyLog();
-        }
+function closeRegulationLog() {
+    document.getElementById('regulationLogModal').classList.remove('active');
+}
 
-        function deleteDysregulation(index) {
-            if (!confirm('Delete this episode?')) return;
-            dailyLogs[currentLogDate].dysregulation.splice(index, 1);
-            saveData();
-            renderDailyLog();
+function selectRegState(state) {
+    currentRegState = state;
+    document.getElementById('regState').value = state;
+    
+    // Visual feedback
+    document.querySelectorAll('#regStateRegulated, #regStateDysregulated, #regStateMixed').forEach(btn => {
+        btn.style.background = '';
+        btn.style.border = '';
+    });
+    
+    const selectedBtn = document.getElementById('regState' + state.charAt(0).toUpperCase() + state.slice(1));
+    if (selectedBtn) {
+        selectedBtn.style.background = 'var(--accent)';
+        selectedBtn.style.border = '2px solid var(--accent)';
+        selectedBtn.style.color = 'white';
+    }
+}
+
+function selectRegIntensity(value, element) {
+    document.getElementById('regIntensity').value = value;
+    document.querySelectorAll('#regulationLogModal .initiation-btn').forEach(btn => btn.classList.remove('selected'));
+    if (element) {
+        element.closest('.initiation-btn').classList.add('selected');
+    }
+}
+
+function nextRegStep(step) {
+    const state = document.getElementById('regState').value;
+    
+    if (step === 2 && !state) {
+        alert('Please select a regulation state');
+        return;
+    }
+    
+    currentRegStep = step;
+    showRegStep(step);
+}
+
+function prevRegStep(step) {
+    currentRegStep = step;
+    showRegStep(step);
+}
+
+function showRegStep(step) {
+    // Hide all steps
+    document.querySelectorAll('#regStep1, #regStep2Regulated, #regStep2Dysregulated, #regStep2Mixed, #regStep3Physical, #regStep4Coping').forEach(el => el.style.display = 'none');
+    
+    const state = document.getElementById('regState').value;
+    
+    if (step === 1) {
+        document.getElementById('regStep1').style.display = 'block';
+    } else if (step === 2) {
+        if (state === 'regulated') {
+            document.getElementById('regStep2Regulated').style.display = 'block';
+        } else if (state === 'dysregulated') {
+            document.getElementById('regStep2Dysregulated').style.display = 'block';
+        } else if (state === 'mixed') {
+            document.getElementById('regStep2Mixed').style.display = 'block';
         }
+    } else if (step === 3) {
+        // Physical step only for dysregulated/mixed
+        if (state === 'dysregulated' || state === 'mixed') {
+            document.getElementById('regStep3Physical').style.display = 'block';
+        } else {
+            // Skip to step 4 for regulated
+            showRegStep(4);
+            return;
+        }
+    } else if (step === 4) {
+        document.getElementById('regStep4Coping').style.display = 'block';
+    }
+}
+
+// Handle "Other" checkbox toggles
+document.addEventListener('change', function(e) {
+    if (e.target.type === 'checkbox') {
+        if (e.target.value === 'other') {
+            const parent = e.target.parentElement;
+            const otherInput = parent.querySelector('input[type="text"]');
+            if (otherInput) {
+                otherInput.style.display = e.target.checked ? 'block' : 'none';
+            }
+        }
+    }
+});
+
+function saveRegulationLog() {
+    const state = document.getElementById('regState').value;
+    const intensity = parseInt(document.getElementById('regIntensity').value);
+    
+    if (!state) {
+        alert('Please select a regulation state');
+        return;
+    }
+    
+    // Collect patterns
+    let patterns = [];
+    let otherPattern = '';
+    
+    if (state === 'regulated') {
+        patterns = Array.from(document.querySelectorAll('.reg-pattern:checked')).map(cb => cb.value).filter(v => v !== 'other');
+        otherPattern = document.getElementById('regPatternOther').value.trim();
+    } else if (state === 'dysregulated') {
+        patterns = Array.from(document.querySelectorAll('.dysreg-pattern:checked')).map(cb => cb.value).filter(v => v !== 'other');
+        otherPattern = document.getElementById('dysregPatternOther').value.trim();
+    } else if (state === 'mixed') {
+        patterns = Array.from(document.querySelectorAll('.mixed-pattern:checked')).map(cb => cb.value).filter(v => v !== 'other');
+        otherPattern = document.getElementById('mixedPatternOther').value.trim();
+    }
+    
+    // Collect physical
+    let physical = [];
+    let otherPhysical = '';
+    if (state === 'dysregulated' || state === 'mixed') {
+        physical = Array.from(document.querySelectorAll('.physical:checked')).map(cb => cb.value).filter(v => v !== 'other');
+        otherPhysical = document.getElementById('physicalOther').value.trim();
+    }
+    
+    // Collect helped
+    const helped = Array.from(document.querySelectorAll('.helped:checked')).map(cb => cb.value).filter(v => v !== 'other');
+    const otherHelped = document.getElementById('helpedOther').value.trim();
+    
+    // Collect worse
+    const worse = Array.from(document.querySelectorAll('.worse:checked')).map(cb => cb.value).filter(v => v !== 'other');
+    const otherWorse = document.getElementById('worseOther').value.trim();
+    
+    initLog(currentLogDate);
+    dailyLogs[currentLogDate].regulation = {
+        state,
+        intensity,
+        patterns,
+        other_pattern: otherPattern,
+        physical,
+        other_physical: otherPhysical,
+        helped,
+        other_helped: otherHelped,
+        worse,
+        other_worse: otherWorse,
+        timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    };
+    
+    saveData();
+    closeRegulationLog();
+    renderDailyLog();
+}
+
+function deleteRegulation() {
+    if (!confirm('Delete regulation entry?')) return;
+    dailyLogs[currentLogDate].regulation = null;
+    saveData();
+    renderDailyLog();
+}
+
+function renderRegulation(log) {
+    const regList = document.getElementById('regulationLogList');
+    if (!regList) return;
+    
+    if (!log.regulation) {
+        regList.innerHTML = '<p style="text-align:center;color:var(--text-dim);padding:20px;">No regulation logged today</p>';
+        return;
+    }
+    
+    const reg = log.regulation;
+    
+    // State emoji and color
+    const stateInfo = {
+        regulated: { emoji: '&#9989;', text: 'Regulated', color: '#4caf50' },
+        dysregulated: { emoji: '&#9888;', text: 'Dysregulated', color: '#f44336' },
+        mixed: { emoji: '&#128993;', text: 'Mixed/Struggled', color: '#ff9800' }
+    };
+    
+    const info = stateInfo[reg.state] || stateInfo.regulated;
+    
+    // Pattern labels
+    const patternLabels = {
+        // Regulated
+        medication_effective: 'Medication effective',
+        high_interest: 'High interest/engagement',
+        good_structure: 'Good structure/routine',
+        movement: 'Movement/exercise',
+        caught_early: 'Caught emotions early',
+        used_strategies: 'Used coping strategies',
+        wall_of_awful: 'Got through Wall of Awful',
+        no_triggers: 'No major triggers',
+        stable_periods: 'Had periods of stability',
         
+        // Dysregulated
+        rsd: 'RSD episode',
+        '0_to_100': '0-to-100 emotional spike',
+        frustration: 'Frustration intolerance',
+        boredom: 'Boredom dysregulation',
+        task_paralysis: 'Task paralysis (Wall of Awful)',
+        no_skills: 'Couldn\'t access skills',
+        stuck_activated: 'Stuck activated (couldn\'t calm)',
+        impulsivity: 'Emotional impulsivity',
+        exec_dysfunction: 'Executive function collapsed',
+        time_blindness: 'Time blindness made it worse'
+    };
+    
+    const physicalLabels = {
+        anxiety: 'Anxiety (racing heart, tight chest)',
+        tension: 'Tension (muscle tightness, clenching)',
+        gi_distress: 'GI distress',
+        fatigue: 'Fatigue/heaviness',
+        numbness: 'Numbness/dissociation',
+        activation: 'Activation/jitteriness',
+        shutdown: 'Shutdown',
+        restless_exhausted: 'Restless but exhausted'
+    };
+    
+    const helpedLabels = {
+        medication: 'Medication',
+        breathwork: 'Breath work',
+        exercise: 'Exercise/movement',
+        crying: 'Crying or venting',
+        eating: 'Eating',
+        talking: 'Talking to someone',
+        time_alone: 'Time alone',
+        nature: 'Nature/outdoors',
+        creative: 'Creative outlet',
+        structure: 'Structure/routine',
+        nothing: 'Nothing helped'
+    };
+    
+    const worseLabels = {
+        meds_off: 'Medication wore off/skipped',
+        boredom: 'Boredom/understimulation',
+        frustrating_task: 'Frustrating task',
+        criticism: 'Criticism/rejection',
+        no_structure: 'Lack of structure',
+        too_many_demands: 'Too many demands',
+        poor_sleep: 'Poor sleep',
+        hunger: 'Hunger/low blood sugar',
+        overstimulation: 'Overstimulation'
+    };
+    
+    const filled = String.fromCharCode(9608);
+    const empty = String.fromCharCode(9617);
+    const intensityBar = filled.repeat(reg.intensity) + empty.repeat((5 - reg.intensity));
+    
+    // Build compact summary card
+    let html = `
+        <div style="background: var(--bg); padding: 15px; border-radius: 12px; border-left: 4px solid ${info.color};">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                <div>
+                    <strong style="font-size: 1.1rem;">${info.emoji} ${info.text}</strong>
+                    <div style="font-size: 0.85rem; color: var(--text-dim); margin-top: 3px;">
+                        ${reg.intensity}/5 ${intensityBar}
+                    </div>
+                </div>
+                <button onclick="deleteRegulation()" style="background: transparent; border: none; color: var(--text-dim); cursor: pointer; padding: 0 5px; font-size: 1.2rem;">✕</button>
+            </div>
+    `;
+    
+    // Patterns (collapsible)
+    if (reg.patterns && reg.patterns.length > 0) {
+        const patternsList = reg.patterns.map(p => patternLabels[p] || p).join(', ');
+        const displayText = patternsList.length > 60 ? patternsList.substring(0, 60) + '...' : patternsList;
+        
+        html += `
+            <details style="margin: 8px 0;">
+                <summary style="cursor: pointer; font-size: 0.9rem; font-weight: 600; color: var(--accent);">
+                    Patterns (${reg.patterns.length})
+                </summary>
+                <div style="font-size: 0.85rem; color: var(--text-dim); margin-top: 8px; padding-left: 15px;">
+                    ${reg.patterns.map(p => `• ${patternLabels[p] || p}`).join('<br>')}
+                    ${reg.other_pattern ? `<br>• ${reg.other_pattern}` : ''}
+                </div>
+            </details>
+        `;
+    }
+    
+    // Physical
+    if (reg.physical && reg.physical.length > 0) {
+        html += `
+            <details style="margin: 8px 0;">
+                <summary style="cursor: pointer; font-size: 0.9rem; font-weight: 600; color: var(--accent);">
+                    Physical (${reg.physical.length})
+                </summary>
+                <div style="font-size: 0.85rem; color: var(--text-dim); margin-top: 8px; padding-left: 15px;">
+                    ${reg.physical.map(p => `• ${physicalLabels[p] || p}`).join('<br>')}
+                    ${reg.other_physical ? `<br>• ${reg.other_physical}` : ''}
+                </div>
+            </details>
+        `;
+    }
+    
+    // Helped
+    if (reg.helped && reg.helped.length > 0) {
+        html += `
+            <details style="margin: 8px 0;">
+                <summary style="cursor: pointer; font-size: 0.9rem; font-weight: 600; color: #4caf50;">
+                    What helped (${reg.helped.length})
+                </summary>
+                <div style="font-size: 0.85rem; color: var(--text-dim); margin-top: 8px; padding-left: 15px;">
+                    ${reg.helped.map(h => `• ${helpedLabels[h] || h}`).join('<br>')}
+                    ${reg.other_helped ? `<br>• ${reg.other_helped}` : ''}
+                </div>
+            </details>
+        `;
+    }
+    
+    // Worse
+    if (reg.worse && reg.worse.length > 0) {
+        html += `
+            <details style="margin: 8px 0;">
+                <summary style="cursor: pointer; font-size: 0.9rem; font-weight: 600; color: #f44336;">
+                    What made it worse (${reg.worse.length})
+                </summary>
+                <div style="font-size: 0.85rem; color: var(--text-dim); margin-top: 8px; padding-left: 15px;">
+                    ${reg.worse.map(w => `• ${worseLabels[w] || w}`).join('<br>')}
+                    ${reg.other_worse ? `<br>• ${reg.other_worse}` : ''}
+                </div>
+            </details>
+        `;
+    }
+    
+    html += `
+            <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 10px; opacity: 0.7;">
+                Logged at ${reg.timestamp}
+            </div>
+        </div>
+    `;
+    
+    regList.innerHTML = html;
+}
         function viewDocument(type) {
             const docs = {
                 rsd: 'RSD Trigger Map',
@@ -4362,7 +5258,7 @@
             
             saveData();
             renderExperiments();
-            alert('✅ Project updated!');
+            alert('Project updated!');
         }
         
         function deleteExperiment(expId) {
@@ -4378,13 +5274,739 @@
                 experiments.splice(index, 1);
                 saveData();
                 renderExperiments();
-                alert('🗑️ Project deleted');
+                alert('Project deleted');
             }
         }
         
         function viewExperimentDetails(expId) {
             const exp = experiments.find(e => e.id === expId);
             alert(`${exp.title}\n\nStarted: ${exp.startDate}\nCheck-ins: ${exp.checkIns.length}\nProgress: ${Math.round(exp.progress)}%`);
+        }
+        
+        // ====================
+        // ADHD TASK SORTER - MANUAL RATING SYSTEM
+        // ====================
+        
+        let rawTasks = [];
+        let ratedTasks = [];
+        let currentRatingIndex = 0;
+        let currentFilter = 'all';
+        let currentEnergy = 'medium';
+        
+        function clearEverything() {
+            document.getElementById('brainDump').value = '';
+            document.getElementById('ratingStep').style.display = 'none';
+            document.getElementById('filterStep').style.display = 'none';
+            document.getElementById('recommendationsSection').style.display = 'none';
+            document.getElementById('sortedTasksSection').style.display = 'none';
+            rawTasks = [];
+            ratedTasks = [];
+            currentRatingIndex = 0;
+        }
+        
+        function startRating() {
+            const dump = document.getElementById('brainDump').value.trim();
+            if (!dump) {
+                alert('Please dump some tasks first!');
+                return;
+            }
+            
+            // Parse tasks - one per line, remove bullets
+            const lines = dump.split('\n').filter(l => l.trim());
+            rawTasks = lines.map(line => line.replace(/^[-•*]\s*/, '').trim()).filter(t => t);
+            
+            if (rawTasks.length === 0) {
+                alert('No tasks found! Add at least one task.');
+                return;
+            }
+            
+            // Load saved task ratings from memory
+            const taskMemory = JSON.parse(localStorage.getItem('taskMemory') || '{}');
+            
+            // Initialize rated tasks array
+            ratedTasks = rawTasks.map(text => {
+                // Check if we've seen this task before (case-insensitive match)
+                const savedTask = taskMemory[text.toLowerCase()];
+                
+                if (savedTask) {
+                    // Use saved ratings!
+                    return {
+                        text,
+                        interest: savedTask.interest || 3,
+                        resistance: savedTask.resistance || 3,
+                        efCost: savedTask.efCost || 3,
+                        dopamine: savedTask.dopamine || 3,
+                        time: savedTask.time || suggestTime(text),
+                        urgency: savedTask.urgency || 'not_urgent',
+                        taskType: savedTask.taskType || 'onetime',
+                        totalHours: savedTask.totalHours || 10,
+                        status: 'not_started',
+                        category: savedTask.category || categorizeTask(text.toLowerCase()),
+                        createdDate: getTodayKey(),
+                        scheduledFor: null,
+                        timeSpent: 0,
+                        sessions: [],
+                        fromMemory: true // Flag that this was loaded from memory
+                    };
+                } else {
+                    // New task - use defaults
+                    return {
+                        text,
+                        interest: 3,
+                        resistance: 3,
+                        efCost: 3,
+                        dopamine: 3,
+                        time: suggestTime(text),
+                        urgency: 'not_urgent',
+                        taskType: 'onetime',
+                        totalHours: 10,
+                        status: 'not_started',
+                        category: categorizeTask(text.toLowerCase()),
+                        createdDate: getTodayKey(),
+                        scheduledFor: null,
+                        timeSpent: 0,
+                        sessions: [],
+                        fromMemory: false
+                    };
+                }
+            });
+            
+            currentRatingIndex = 0;
+            showRatingScreen();
+        }
+        
+        function suggestTime(taskText) {
+            const lower = taskText.toLowerCase();
+            if (lower.match(/quick|call|email|text|check/)) return 'quick';
+            if (lower.match(/learn|course|book|project|build/)) return 'long';
+            if (lower.match(/file|tax|paper|report|write/)) return 'long';
+            return 'medium';
+        }
+        
+        function categorizeTask(lower) {
+            if (lower.match(/learn|course|tutorial|study|read|book/)) return 'skill';
+            if (lower.match(/email|call|text|message|contact/)) return 'communication';
+            if (lower.match(/tax|bill|paper|file|admin|document/)) return 'admin';
+            if (lower.match(/create|design|write|art|music|draw/)) return 'creative';
+            if (lower.match(/exercise|workout|gym|run|health/)) return 'health';
+            return 'general';
+        }
+        
+        function showRatingScreen() {
+            document.getElementById('ratingStep').style.display = 'block';
+            
+            const task = ratedTasks[currentRatingIndex];
+            const memoryNote = task.fromMemory ? ' <span style="color: var(--accent); font-size: 0.85rem;">✓ Ratings loaded from memory</span>' : '';
+            document.getElementById('ratingProgress').innerHTML = `Task ${currentRatingIndex + 1} of ${ratedTasks.length}${memoryNote}`;
+            
+            const task = ratedTasks[currentRatingIndex];
+            const timeLabels = {
+                quick: '5-15min',
+                medium: '30-60min',
+                long: '1-3 hrs',
+                verylong: '3+ hrs'
+            };
+            
+            document.getElementById('currentTaskRating').innerHTML = `
+                <div style="background: var(--bg); padding: 20px; border-radius: 12px;">
+                    <h3 style="margin-bottom: 20px; color: var(--accent);">${task.text}</h3>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px;">⚡ Interest Level (how much do you WANT to do this?)</label>
+                        <div style="display: flex; gap: 10px; font-size: 2rem;">
+                            ${[1,2,3,4,5].map(n => `<span onclick="rateTask('interest', ${n})" style="cursor: pointer; ${task.interest >= n ? 'opacity: 1;' : 'opacity: 0.3;'}" id="interest-${n}">★</span>`).join('')}
+                        </div>
+                        <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 5px;">1=Torture, 3=Meh, 5=Love it!</p>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px;">🚧 Resistance Level (how much are you dreading it?)</label>
+                        <div style="display: flex; gap: 10px; font-size: 2rem;">
+                            ${[1,2,3,4,5].map(n => `<span onclick="rateTask('resistance', ${n})" style="cursor: pointer; ${task.resistance >= n ? 'opacity: 1;' : 'opacity: 0.3;'}" id="resistance-${n}">🧱</span>`).join('')}
+                        </div>
+                        <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 5px;">1=Easy, 3=Some wall, 5=CANNOT</p>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px;">💪 Executive Function Cost (mental energy needed)</label>
+                        <div style="display: flex; gap: 10px; font-size: 2rem;">
+                            ${[1,2,3,4,5].map(n => `<span onclick="rateTask('efCost', ${n})" style="cursor: pointer; ${task.efCost >= n ? 'opacity: 1;' : 'opacity: 0.3;'}" id="efCost-${n}">🧠</span>`).join('')}
+                        </div>
+                        <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 5px;">1=Braindead, 3=Focus needed, 5=Mental marathon</p>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px;">🎯 Dopamine Payoff (how good will you feel after?)</label>
+                        <div style="display: flex; gap: 10px; font-size: 2rem;">
+                            ${[1,2,3,4,5].map(n => `<span onclick="rateTask('dopamine', ${n})" style="cursor: pointer; ${task.dopamine >= n ? 'opacity: 1;' : 'opacity: 0.3;'}" id="dopamine-${n}">✨</span>`).join('')}
+                        </div>
+                        <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 5px;">1=No reward, 3=Some satisfaction, 5=HUGE WIN</p>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px;">⏰ Time Estimate (algorithm suggests: ${timeLabels[task.time]})</label>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px;">
+                            <button onclick="rateTask('time', 'quick')" class="context-mode-btn" style="padding: 10px; ${task.time === 'quick' ? 'background: var(--accent); color: white;' : ''}">5-15min</button>
+                            <button onclick="rateTask('time', 'medium')" class="context-mode-btn" style="padding: 10px; ${task.time === 'medium' ? 'background: var(--accent); color: white;' : ''}">30-60min</button>
+                            <button onclick="rateTask('time', 'long')" class="context-mode-btn" style="padding: 10px; ${task.time === 'long' ? 'background: var(--accent); color: white;' : ''}">1-3 hrs</button>
+                            <button onclick="rateTask('time', 'verylong')" class="context-mode-btn" style="padding: 10px; ${task.time === 'verylong' ? 'background: var(--accent); color: white;' : ''}">3+ hrs</button>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px;">🚨 Urgency</label>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px;">
+                            <button onclick="rateTask('urgency', 'overdue')" class="context-mode-btn" style="padding: 8px; font-size: 0.85rem; ${task.urgency === 'overdue' ? 'background: var(--accent); color: white;' : ''}">OVERDUE</button>
+                            <button onclick="rateTask('urgency', 'today')" class="context-mode-btn" style="padding: 8px; font-size: 0.85rem; ${task.urgency === 'today' ? 'background: var(--accent); color: white;' : ''}">Today</button>
+                            <button onclick="rateTask('urgency', 'next_3_days')" class="context-mode-btn" style="padding: 8px; font-size: 0.85rem; ${task.urgency === 'next_3_days' ? 'background: var(--accent); color: white;' : ''}">Next 3 days</button>
+                            <button onclick="rateTask('urgency', 'this_week')" class="context-mode-btn" style="padding: 8px; font-size: 0.85rem; ${task.urgency === 'this_week' ? 'background: var(--accent); color: white;' : ''}">This week</button>
+                            <button onclick="rateTask('urgency', 'this_month')" class="context-mode-btn" style="padding: 8px; font-size: 0.85rem; ${task.urgency === 'this_month' ? 'background: var(--accent); color: white;' : ''}">This month</button>
+                            <button onclick="rateTask('urgency', 'next_6_months')" class="context-mode-btn" style="padding: 8px; font-size: 0.85rem; ${task.urgency === 'next_6_months' ? 'background: var(--accent); color: white;' : ''}">Next 6 months</button>
+                            <button onclick="rateTask('urgency', 'not_urgent')" class="context-mode-btn" style="padding: 8px; font-size: 0.85rem; ${task.urgency === 'not_urgent' ? 'background: var(--accent); color: white;' : ''}">Someday</button>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px;">🔄 Task Type</label>
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="rateTask('taskType', 'onetime')" class="context-mode-btn" style="padding: 10px; flex: 1; ${task.taskType === 'onetime' ? 'background: var(--accent); color: white;' : ''}">
+                                One-time
+                                <span style="font-size: 0.7rem; display: block; opacity: 0.8;">Do once & done</span>
+                            </button>
+                            <button onclick="rateTask('taskType', 'ongoing')" class="context-mode-btn" style="padding: 10px; flex: 1; ${task.taskType === 'ongoing' ? 'background: var(--accent); color: white;' : ''}">
+                                Ongoing
+                                <span style="font-size: 0.7rem; display: block; opacity: 0.8;">Long-term commitment</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    ${task.taskType === 'ongoing' ? `
+                        <div style="margin-bottom: 20px; padding: 15px; background: var(--surface); border-radius: 8px; border-left: 3px solid var(--accent);">
+                            <label style="display: block; font-weight: 600; margin-bottom: 8px;">📊 Estimated total time to completion</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="number" id="totalHours" value="${task.totalHours || 10}" min="1" max="1000" 
+                                    onchange="rateTask('totalHours', parseInt(this.value))"
+                                    style="width: 80px; padding: 8px; border: 2px solid var(--lavender); border-radius: 6px; font-size: 1rem;">
+                                <span style="font-size: 0.9rem;">hours total</span>
+                            </div>
+                            <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 5px;">This will be broken into sessions across multiple days</p>
+                        </div>
+                    ` : ''}
+                    
+                    <div style="display: flex; gap: 10px;">
+                        ${currentRatingIndex > 0 ? '<button onclick="previousTask()" class="experiment-btn secondary" style="flex: 1;">← Back</button>' : ''}
+                        <button onclick="nextTask()" class="experiment-btn primary" style="flex: 2;">Next Task →</button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function rateTask(field, value) {
+            ratedTasks[currentRatingIndex][field] = value;
+            
+            // Save to task memory
+            saveTaskToMemory(ratedTasks[currentRatingIndex]);
+            
+            showRatingScreen(); // Refresh to show updated stars/buttons
+        }
+        
+        function saveTaskToMemory(task) {
+            const taskMemory = JSON.parse(localStorage.getItem('taskMemory') || '{}');
+            
+            // Save by lowercase text as key
+            taskMemory[task.text.toLowerCase()] = {
+                interest: task.interest,
+                resistance: task.resistance,
+                efCost: task.efCost,
+                dopamine: task.dopamine,
+                time: task.time,
+                urgency: task.urgency,
+                taskType: task.taskType,
+                totalHours: task.totalHours,
+                category: task.category,
+                lastUpdated: getTodayKey()
+            };
+            
+            localStorage.setItem('taskMemory', JSON.stringify(taskMemory));
+            updateMemoryDisplay();
+        }
+        
+        function updateMemoryDisplay() {
+            // Safety check - only run if elements exist
+            const memoryCountEl = document.getElementById('memoryCount');
+            const memoryListEl = document.getElementById('taskMemoryList');
+            
+            if (!memoryCountEl || !memoryListEl) return; // Elements don't exist yet
+            
+            const taskMemory = JSON.parse(localStorage.getItem('taskMemory') || '{}');
+            const tasks = Object.entries(taskMemory);
+            
+            memoryCountEl.textContent = tasks.length;
+            
+            if (tasks.length === 0) {
+                memoryListEl.innerHTML = '<p style="color: var(--text-dim); font-size: 0.85rem; text-align: center; padding: 20px;">No saved tasks yet. Rate some tasks and they\'ll be remembered!</p>';
+                return;
+            }
+            
+            let html = '<div style="font-size: 0.85rem;">';
+            tasks.sort((a, b) => b[1].lastUpdated.localeCompare(a[1].lastUpdated)).forEach(([taskName, data]) => {
+                const timeLabels = { quick: '5-15min', medium: '30-60min', long: '1-3 hrs', verylong: '3+ hrs' };
+                const safeName = taskName.replace(/'/g, "\\'");
+                html += `
+                    <div style="padding: 10px; background: var(--surface); border-radius: 6px; margin-bottom: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 5px;">
+                            <strong style="flex: 1; text-transform: capitalize;">${taskName}</strong>
+                            <button onclick="deleteTaskMemory('${safeName}')" style="background: var(--red); color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer;">Delete</button>
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-dim); display: flex; gap: 10px; flex-wrap: wrap;">
+                            <span>⚡ ${'★'.repeat(data.interest)}</span>
+                            <span>🚧 ${data.resistance}/5</span>
+                            <span>💪 ${data.efCost}/5</span>
+                            <span>✨ ${data.dopamine}/5</span>
+                            <span>⏰ ${timeLabels[data.time]}</span>
+                            <span>${data.taskType === 'ongoing' ? '🔄 Ongoing' : '✅ One-time'}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            memoryListEl.innerHTML = html;
+        }
+        
+        function deleteTaskMemory(taskName) {
+            if (!confirm(`Delete saved ratings for "${taskName}"?`)) return;
+            
+            const taskMemory = JSON.parse(localStorage.getItem('taskMemory') || '{}');
+            delete taskMemory[taskName.toLowerCase()];
+            localStorage.setItem('taskMemory', JSON.stringify(taskMemory));
+            updateMemoryDisplay();
+        }
+        
+        function previousTask() {
+            if (currentRatingIndex > 0) {
+                currentRatingIndex--;
+                showRatingScreen();
+            }
+        }
+        
+        function nextTask() {
+            if (currentRatingIndex < ratedTasks.length - 1) {
+                currentRatingIndex++;
+                showRatingScreen();
+            } else {
+                // Done rating - show filter screen
+                finishRating();
+            }
+        }
+        
+        function skipRating() {
+            finishRating();
+        }
+        
+        function finishRating() {
+            document.getElementById('ratingStep').style.display = 'none';
+            document.getElementById('filterStep').style.display = 'block';
+            applyQuickFilter('all'); // Show all by default
+        }
+        
+        function applyQuickFilter(mode) {
+            currentFilter = mode;
+            
+            let filtered = [...ratedTasks];
+            
+            switch(mode) {
+                case 'fun':
+                    filtered = filtered.filter(t => t.interest >= 4 || (t.interest >= 3 && t.resistance <= 2));
+                    break;
+                case 'quickwins':
+                    filtered = filtered.filter(t => t.time === 'quick');
+                    break;
+                case 'lowenergy':
+                    filtered = filtered.filter(t => t.efCost <= 2);
+                    break;
+                case 'learning':
+                    filtered = filtered.filter(t => t.category === 'skill');
+                    break;
+                case 'crisis':
+                    filtered = filtered.filter(t => t.urgency === 'overdue' || t.urgency === 'today');
+                    break;
+                case 'all':
+                default:
+                    // Show all
+                    break;
+            }
+            
+            renderResults(filtered);
+        }
+        
+        function applyAdvancedFilters() {
+            const interests = Array.from(document.querySelectorAll('.filter-interest:checked')).map(cb => parseInt(cb.value));
+            const resistances = Array.from(document.querySelectorAll('.filter-resistance:checked')).map(cb => cb.value);
+            const times = Array.from(document.querySelectorAll('.filter-time:checked')).map(cb => cb.value);
+            const energies = Array.from(document.querySelectorAll('.filter-energy:checked')).map(cb => cb.value);
+            
+            let filtered = ratedTasks.filter(task => {
+                if (interests.length > 0 && !interests.includes(task.interest)) return false;
+                
+                if (resistances.length > 0) {
+                    const matchesResistance = resistances.some(r => {
+                        if (r === '0-2') return task.resistance <= 2;
+                        if (r === '3') return task.resistance === 3;
+                        if (r === '4-5') return task.resistance >= 4;
+                        return false;
+                    });
+                    if (!matchesResistance) return false;
+                }
+                
+                if (times.length > 0 && !times.includes(task.time)) return false;
+                
+                if (energies.length > 0) {
+                    const matchesEnergy = energies.some(e => {
+                        if (e === 'low') return task.efCost <= 2;
+                        if (e === 'medium') return task.efCost === 3;
+                        if (e === 'high') return task.efCost >= 4;
+                        return false;
+                    });
+                    if (!matchesEnergy) return false;
+                }
+                
+                return true;
+            });
+            
+            renderResults(filtered);
+        }
+        
+        function clearAdvancedFilters() {
+            document.querySelectorAll('.filter-interest, .filter-resistance, .filter-time, .filter-energy').forEach(cb => cb.checked = false);
+            applyQuickFilter('all');
+        }
+        
+        function setEnergy(level) {
+            currentEnergy = level;
+            
+            // Update button states
+            ['low', 'medium', 'high'].forEach(l => {
+                const btn = document.getElementById('energyBtn-' + l);
+                if (l === level) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            // Update hint
+            const hints = {
+                low: 'We\'ll suggest easy tasks and offer to postpone hard ones',
+                medium: 'Good balance - you can tackle most things',
+                high: 'Great! You can take on challenging tasks'
+            };
+            document.getElementById('energyHint').textContent = hints[level];
+            
+            // Re-render with energy-aware suggestions
+            if (currentFilter) {
+                applyQuickFilter(currentFilter);
+            }
+        }
+        
+        function renderResults(filtered) {
+            if (filtered.length === 0) {
+                document.getElementById('recommendationsSection').innerHTML = '<p style="padding: 20px; background: var(--surface); border-radius: 12px; text-align: center; color: var(--text-dim);">No tasks match your filters. Try adjusting or use "Show All".</p>';
+                document.getElementById('recommendationsSection').style.display = 'block';
+                document.getElementById('sortedTasksSection').style.display = 'none';
+                return;
+            }
+            
+            // Energy mapping
+            const energyLevels = { low: 1, medium: 2, high: 3 };
+            const currentEnergyValue = energyLevels[currentEnergy];
+            
+            // Categorize tasks
+            const highResistanceTasks = filtered.filter(t => t.resistance >= 4);
+            const momentumBuilders = filtered.filter(t => t.interest >= 4 && t.resistance <= 2 && t.efCost <= currentEnergyValue + 1);
+            const doableNow = filtered.filter(t => t.efCost <= currentEnergyValue && t.resistance <= 3);
+            const postponeCandidates = filtered.filter(t => t.efCost > currentEnergyValue);
+            
+            let recHtml = '';
+            
+            // Show energy state
+            const energyEmojis = { low: '😴', medium: '😐', high: '⚡' };
+            recHtml += `
+                <div style="background: var(--bg); padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+                    <strong>Your Current State:</strong> ${energyEmojis[currentEnergy]} Energy: ${currentEnergy.toUpperCase()}
+                </div>
+            `;
+            
+            // SCENARIO 1: High resistance tasks + momentum builders available
+            if (highResistanceTasks.length > 0 && momentumBuilders.length > 0 && currentEnergy !== 'low') {
+                recHtml += `
+                    <div style="background: var(--surface); padding: 20px; border-radius: 12px; margin-bottom: 20px; border-left: 4px solid var(--accent);">
+                        <h4 style="margin: 0 0 10px 0; color: var(--accent);">💡 SMART PATH: Momentum Strategy</h4>
+                        <p style="font-size: 0.9rem; color: var(--text-dim); margin-bottom: 15px;">You have ${highResistanceTasks.length} high-resistance task(s). Let's build momentum first!</p>
+                        
+                        <div style="background: var(--bg); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                            <h5 style="margin: 0 0 10px 0; color: var(--accent);">PHASE 1: Build Momentum (15-30min)</h5>
+                            ${momentumBuilders.slice(0, 2).map(t => {
+                                const timeLabels = { quick: '5-15min', medium: '30-60min', long: '1-3 hrs', verylong: '3+ hrs' };
+                                return `
+                                    <div style="padding: 10px; background: var(--surface); border-radius: 6px; margin-bottom: 8px;">
+                                        <strong>${t.text}</strong>
+                                        <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 3px;">
+                                            ⏰ ${timeLabels[t.time]} | ⚡ ${'★'.repeat(t.interest)} | Easy start
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                            <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 10px; font-style: italic;">→ This will boost your dopamine & energy!</p>
+                        </div>
+                        
+                        <div style="background: var(--bg); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                            <h5 style="margin: 0 0 10px 0; color: var(--orange);">PHASE 2: Attack with Momentum</h5>
+                            ${highResistanceTasks.slice(0, 2).map(t => {
+                                const timeLabels = { quick: '5-15min', medium: '30-60min', long: '1-3 hrs', verylong: '3+ hrs' };
+                                return `
+                                    <div style="padding: 10px; background: var(--surface); border-radius: 6px; margin-bottom: 8px;">
+                                        <strong>${t.text}</strong>
+                                        <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 3px;">
+                                            ⏰ ${timeLabels[t.time]} | 🚧 ${t.resistance}/5 | Use 2-min rule
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                            <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 10px; font-style: italic;">→ You'll have momentum from Phase 1!</p>
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="alert('Start with first momentum builder!')" class="experiment-btn primary" style="flex: 1;">Start Phase 1</button>
+                            <button onclick="alert('Skipping straight to hard tasks - good luck!')" class="experiment-btn secondary">Skip to Phase 2</button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // SCENARIO 2: Low energy - postpone suggestions
+            else if (currentEnergy === 'low') {
+                const lowEffortTasks = filtered.filter(t => t.efCost <= 2);
+                recHtml += `
+                    <div style="background: var(--surface); padding: 20px; border-radius: 12px; margin-bottom: 20px; border-left: 4px solid var(--orange);">
+                        <h4 style="margin: 0 0 10px 0; color: var(--accent);">😴 LOW ENERGY MODE</h4>
+                        <p style="font-size: 0.9rem; color: var(--text-dim); margin-bottom: 15px;">You're tired. Let's be realistic about what you can do.</p>
+                        
+                        ${lowEffortTasks.length > 0 ? `
+                            <div style="background: var(--bg); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                                <h5 style="margin: 0 0 10px 0; color: #4caf50;">✅ YOU CAN DO NOW (Low effort):</h5>
+                                ${lowEffortTasks.slice(0, 3).map(t => {
+                                    const timeLabels = { quick: '5-15min', medium: '30-60min', long: '1-3 hrs', verylong: '3+ hrs' };
+                                    return `
+                                        <div style="padding: 8px; background: var(--surface); border-radius: 6px; margin-bottom: 6px; font-size: 0.9rem;">
+                                            ${t.text} <span style="color: var(--text-dim);">(${timeLabels[t.time]})</span>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        ` : ''}
+                        
+                        ${postponeCandidates.length > 0 ? `
+                            <div style="background: var(--bg); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                                <h5 style="margin: 0 0 10px 0; color: var(--orange);">📅 POSTPONE TO TOMORROW (Need more energy):</h5>
+                                ${postponeCandidates.slice(0, 3).map(t => {
+                                    return `
+                                        <div style="padding: 8px; background: var(--surface); border-radius: 6px; margin-bottom: 6px; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center;">
+                                            <span>${t.text}</span>
+                                            <button onclick="postponeTask('${t.text.replace(/'/g, "\\'")}', 'tomorrow')" class="experiment-btn secondary" style="padding: 4px 8px; font-size: 0.75rem;">Tomorrow</button>
+                                        </div>
+                                    `;
+                                }).join('')}
+                                <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 10px; font-style: italic;">These will show as priorities tomorrow morning</p>
+                            </div>
+                        ` : ''}
+                        
+                        <div style="background: #fff3cd; padding: 12px; border-radius: 6px; font-size: 0.85rem; border-left: 3px solid #ffc107;">
+                            <strong>💡 Or just rest!</strong> Sometimes the best thing to do is nothing. No guilt.
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // SCENARIO 3: High energy - tackle the beast!
+            else if (currentEnergy === 'high' && highResistanceTasks.length > 0) {
+                recHtml += `
+                    <div style="background: var(--surface); padding: 20px; border-radius: 12px; margin-bottom: 20px; border-left: 4px solid #4caf50;">
+                        <h4 style="margin: 0 0 10px 0; color: var(--accent);">⚡ HIGH ENERGY - You Got This!</h4>
+                        <p style="font-size: 0.9rem; color: var(--text-dim); margin-bottom: 15px;">You have the energy to tackle tough stuff. Want to slay a beast?</p>
+                        
+                        <div style="background: var(--bg); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                            <h5 style="margin: 0 0 10px 0; color: var(--red);">🔥 TACKLE THE BEAST FIRST:</h5>
+                            ${highResistanceTasks.slice(0, 2).map(t => {
+                                const timeLabels = { quick: '5-15min', medium: '30-60min', long: '1-3 hrs', verylong: '3+ hrs' };
+                                return `
+                                    <div style="padding: 12px; background: var(--surface); border-radius: 6px; margin-bottom: 10px;">
+                                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                                            <strong style="flex: 1;">${t.text}</strong>
+                                            <button onclick="start2MinTimer('${t.text.replace(/'/g, "\\'")}', '${timeLabels[t.time]}')" class="experiment-btn primary" style="padding: 6px 12px; font-size: 0.85rem;">Start</button>
+                                        </div>
+                                        <p style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 5px;">Why now: You have energy + getting it done = HUGE relief</p>
+                                        <p style="font-size: 0.75rem; color: var(--text-dim);">💡 Try: 2-min rule, body doubling, break into smallest step</p>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        
+                        ${momentumBuilders.length > 0 ? `
+                            <div style="background: var(--bg); padding: 15px; border-radius: 8px;">
+                                <h5 style="margin: 0 0 10px 0; color: #4caf50;">🎁 THEN REWARD YOURSELF:</h5>
+                                ${momentumBuilders.slice(0, 2).map(t => {
+                                    return `<div style="padding: 6px; font-size: 0.9rem;">→ ${t.text}</div>`;
+                                }).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+            
+            // SCENARIO 4: Regular recommendations (medium energy, no special cases)
+            else {
+                const recommendations = [...filtered].sort((a, b) => {
+                    const scoreA = a.interest + a.dopamine - a.resistance;
+                    const scoreB = b.interest + b.dopamine - b.resistance;
+                    return scoreB - scoreA;
+                }).slice(0, 3);
+                
+                recommendations.forEach((task, idx) => {
+                    const reasons = [];
+                    if (task.interest >= 4) reasons.push(`High interest (${task.interest}/5)`);
+                    if (task.resistance <= 2) reasons.push(`Low resistance (${task.resistance}/5)`);
+                    if (task.dopamine >= 4) reasons.push(`Big payoff (${task.dopamine}/5)`);
+                    if (task.time === 'quick') reasons.push('Quick win');
+                    if (task.efCost <= 2) reasons.push('Low effort');
+                    
+                    const timeLabels = { quick: '5-15min', medium: '30-60min', long: '1-3 hrs', verylong: '3+ hrs' };
+                    const medals = ['🥇', '🥈', '🥉'];
+                    
+                    recHtml += `
+                        <div style="background: var(--surface); padding: 20px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid var(--accent);">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                                <div style="flex: 1;">
+                                    <h4 style="margin: 0 0 5px 0; color: var(--accent);">${medals[idx]} ${idx === 0 ? 'BEST PICK' : idx === 1 ? 'SECOND CHOICE' : 'THIRD OPTION'}</h4>
+                                    <strong style="font-size: 1.1rem;">${task.text}</strong>
+                                </div>
+                                <button onclick="start2MinTimer('${task.text.replace(/'/g, "\\'")}', '${timeLabels[task.time]}')" class="experiment-btn primary" style="padding: 8px 16px;">Start</button>
+                            </div>
+                            <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 10px;"><strong>Why:</strong> ${reasons.join(' + ')}</p>
+                            <div style="font-size: 0.8rem; color: var(--text-dim); display: flex; gap: 15px; flex-wrap: wrap;">
+                                <span>⏰ ${timeLabels[task.time]}</span>
+                                <span>⚡ ${'★'.repeat(task.interest)}${'☆'.repeat(5-task.interest)}</span>
+                                <span>🚧 ${task.resistance}/5</span>
+                                <span>💪 ${task.efCost}/5</span>
+                                <span>✨ ${task.dopamine}/5</span>
+                            </div>
+                            ${task.resistance >= 4 ? '<p style="font-size: 0.85rem; margin-top: 10px; padding: 10px; background: var(--red); color: white; border-radius: 6px;">⚠️ High resistance! Try: 2-min rule, body doubling, or break it down.</p>' : ''}
+                        </div>
+                    `;
+                });
+            }
+            
+            document.getElementById('smartRecommendations').innerHTML = recHtml;
+            document.getElementById('recommendationsSection').style.display = 'block';
+            
+            // Categorize all tasks
+            const momentum = filtered.filter(t => t.interest >= 3 && t.resistance <= 2 && t.dopamine >= 3);
+            const medium = filtered.filter(t => !momentum.includes(t) && t.resistance <= 3);
+            const high = filtered.filter(t => !momentum.includes(t) && !medium.includes(t));
+            
+            document.getElementById('momentumBuilders').innerHTML = renderTaskGroup('🟢 Momentum Builders', momentum, 'green', 'Start with these - they\'ll feel good!');
+            document.getElementById('mediumEffort').innerHTML = renderTaskGroup('🟡 Medium Effort', medium, 'yellow', 'Do these when you have energy');
+            document.getElementById('highResistance').innerHTML = renderTaskGroup('🔴 High Resistance', high, 'red', 'Use 2-minute rule + body doubling');
+            
+            document.getElementById('sortedTasksSection').style.display = 'block';
+        }
+        
+        function renderTaskGroup(title, tasks, color, subtitle) {
+            if (tasks.length === 0) return '';
+            
+            const colors = { green: '#4caf50', yellow: '#ff9800', red: '#f44336' };
+            const timeLabels = { quick: '5-15min', medium: '30-60min', long: '1-3 hrs', verylong: '3+ hrs' };
+            
+            let html = `
+                <div style="background: var(--surface); padding: 20px; border-radius: 12px; border-left: 4px solid ${colors[color]}; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 5px 0; color: var(--accent);">${title}</h4>
+                    <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 15px;">${subtitle}</p>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+            `;
+            
+            tasks.forEach(task => {
+                html += `
+                    <div style="background: var(--bg); padding: 12px; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                            <strong style="flex: 1;">${task.text}</strong>
+                            <button onclick="start2MinTimer('${task.text.replace(/'/g, "\\'")}', '${timeLabels[task.time]}')" class="experiment-btn primary" style="padding: 6px 12px; font-size: 0.85rem;">Start</button>
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--text-dim); display: flex; gap: 12px; flex-wrap: wrap;">
+                            <span>⏰ ${timeLabels[task.time]}</span>
+                            <span>⚡ ${'★'.repeat(task.interest)}${'☆'.repeat(5-task.interest)}</span>
+                            <span>🚧 ${task.resistance}/5</span>
+                            <span>💪 ${task.efCost}/5</span>
+                            <span>✨ ${task.dopamine}/5</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div></div>';
+            return html;
+        }
+        
+        function start2MinTimer(taskName, timeEst) {
+            const confirmMsg = `Start: ${taskName}\n\nEstimated time: ${timeEst}\n\nCommit to just 2 minutes?\n(You can stop after or keep going!)`;
+            if (confirm(confirmMsg)) {
+                alert('Great! Set a 2-minute timer and START!\n\n(Full timer integration coming soon)');
+            }
+        }
+        
+        function postponeTask(taskName, when) {
+            // Find the task in ratedTasks
+            const task = ratedTasks.find(t => t.text === taskName);
+            if (!task) return;
+            
+            // Calculate target date
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const targetDate = tomorrow.toISOString().split('T')[0];
+            
+            task.scheduledFor = targetDate;
+            task.status = 'postponed';
+            
+            // Save to localStorage
+            let postponed = JSON.parse(localStorage.getItem('postponedTasks') || '[]');
+            postponed.push({
+                ...task,
+                postponedDate: getTodayKey(),
+                scheduledFor: targetDate
+            });
+            localStorage.setItem('postponedTasks', JSON.stringify(postponed));
+            
+            alert(`✅ "${taskName}" scheduled for tomorrow morning!\n\nIt will show as a priority when you open the app tomorrow.`);
+            
+            // Re-render
+            applyQuickFilter(currentFilter);
+        }
+        
+        function loadPostponedTasks() {
+            const today = getTodayKey();
+            let postponed = JSON.parse(localStorage.getItem('postponedTasks') || '[]');
+            
+            // Filter to today's scheduled tasks
+            const todaysTasks = postponed.filter(t => t.scheduledFor === today);
+            
+            if (todaysTasks.length > 0) {
+                // Show notification
+                const taskList = todaysTasks.map(t => '• ' + t.text).join('\n');
+                alert(`📅 TASKS SCHEDULED FOR TODAY:\n\n${taskList}\n\nThese were postponed yesterday. Ready to tackle them?`);
+            }
+            
+            // Clean up completed/old postponed tasks
+            postponed = postponed.filter(t => t.scheduledFor >= today);
+            localStorage.setItem('postponedTasks', JSON.stringify(postponed));
         }
         
         // Initialize
@@ -4398,6 +6020,9 @@
             document.getElementById('logDateInput').value = currentLogDate;
         }
         renderToday();
+        
+        // Check for postponed tasks from yesterday
+        setTimeout(loadPostponedTasks, 1000);
     </script>
 </body>
 </html>
