@@ -611,6 +611,1435 @@ button {
 </div>
 
 <div id="todayView" class="section active">
+<div id="priorityCard" style="background:var(--surface);padding:20px;border-radius:12px;margin-bottom:20px;">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+<h3 style="margin:0;">🎯 <span id="priorityMonthLabel"></span> Top 3</h3>
+<button onclick="togglePriorityEdit()" class="experiment-btn secondary" style="padding:6px 12px;font-size:.8rem;">Edit</button>
+</div>
+<div id="priorityDisplay"></div>
+<div id="priorityEditPanel" style="display:none;margin-top:10px;"></div>
+</div>
+<div style="text-align:center;margin-bottom:20px">
+<button onclick="navigateDate(-1)" class="experiment-btn secondary">←</button>
+<input type="date" id="dateInput" onchange="changeDate(this.value)" style="margin:0 10px;padding:8px">
+<button onclick="navigateDate(1)" class="experiment-btn secondary">→</button>
+</div>
+<h2 id="dateDisplay" style="text-align:center"></h2>
+<div id="goalsList"></div>
+</div>
+
+<div id="statsView" class="section">
+<h2>📊 Statistics</h2>
+
+<div style="background:var(--surface);padding:20px;border-radius:12px;margin-bottom:20px;">
+<h3 style="margin-top:0;text-align:center;">30-Day Circular Heatmap</h3>
+
+<!-- Filter Options -->
+<div style="margin-bottom:20px;">
+<label style="font-weight:600;margin-bottom:10px;display:block;">Filter Habits:</label>
+<div style="display:flex;gap:10px;flex-wrap:wrap;" id="habitFilterContainer"></div>
+</div>
+
+<div style="display:flex;justify-content:center;margin:20px 0;">
+<canvas id="multiRingChart" width="400" height="500"></canvas>
+</div>
+</div>
+
+<!-- Frequency Progress Section -->
+<div id="frequencyProgressSection" style="background:var(--surface);padding:20px;border-radius:12px;margin-bottom:20px;display:none;">
+<h3 style="margin-top:0;">📈 Frequency Progress (This Week)</h3>
+<div id="frequencyProgressBars"></div>
+</div>
+
+<h3>Individual Goal Statistics</h3>
+<div id="goalStats"></div>
+</div>
+
+<div id="settingsView" class="section">
+<h2>⚙️ Settings</h2>
+<h3>Themes</h3>
+<div id="themeSelector"></div>
+
+<h3>Categories</h3>
+<p style="color:var(--text-dim);font-size:.85rem;margin-top:-10px;">Create your own categories to group habits however makes sense to you.</p>
+<div id="categorySettings"></div>
+<div style="margin-top:10px;">
+<button onclick="addCategory()" class="experiment-btn secondary">+ Add Category</button>
+</div>
+
+<h3 style="margin-top:30px;">Goals</h3>
+<div id="goalSettings"></div>
+<div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">
+<button onclick="addGoal()" class="experiment-btn primary">+ Add Goal</button>
+<button onclick="exportData()" class="experiment-btn secondary">Export Data</button>
+<input type="file" id="importInput" accept=".json" onchange="importData(event)" style="display:none">
+<button onclick="document.getElementById('importInput').click()" class="experiment-btn secondary">Import Data</button>
+<button onclick="resetAll()" class="delete-btn">Reset All</button>
+</div>
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+let goals = JSON.parse(localStorage.getItem('goals')) || ['Exercise 30min','Read 20 pages','Meditate 10min','No phone before bed','Drink 8 glasses water'];
+let data = JSON.parse(localStorage.getItem('trackerData')) || {};
+let goalMetadata = JSON.parse(localStorage.getItem('goalMetadata')) || {};
+
+const DEFAULT_CATEGORIES = [
+  {id:'physical',name:'💪 Physical',color:'#ff6b9d'},{id:'mental',name:'🧠 Mental',color:'#6bb6ff'},
+  {id:'creative',name:'🎨 Creative',color:'#d4a5f9'},{id:'social',name:'💬 Social',color:'#ffc8dd'},
+  {id:'spiritual',name:'🧘 Spiritual',color:'#9b7fbb'},{id:'career',name:'💼 Career',color:'#7cc97f'},
+  {id:'hobbies',name:'🎮 Hobbies',color:'#ff9a76'},{id:'uncategorized',name:'✨ Uncategorized',color:'#c4a4a4'}
+];
+let categories = JSON.parse(localStorage.getItem('categories')) || DEFAULT_CATEGORIES.slice();
+if(!categories.find(c=>c.id==='uncategorized')){
+  categories.push({id:'uncategorized',name:'✨ Uncategorized',color:'#c4a4a4'});
+}
+
+let currentTheme = localStorage.getItem('currentTheme') || 'lavender';
+let currentWeekOffset = 0;
+let userProgress = JSON.parse(localStorage.getItem('userProgress')) || {totalDaysTracked:0,level:1,xp:0,badges:[],longestStreak:0,perfectDays:0};
+let experiments = JSON.parse(localStorage.getItem('experiments')) || [];
+let priorities = JSON.parse(localStorage.getItem('priorities')) || {};
+let priorityEditWorking = [null,null,null];
+const themes = {
+  lavender:{name:'💜 Lavender Dreams',colors:{'--bg':'#f8f4ff','--surface':'#fff','--surface-hover':'#f0ebff','--accent':'#c8a2d0','--accent-dim':'#b894c4','--text':'#4a3f5c','--text-dim':'#8a7d9b','--red':'#ff6b9d','--orange':'#ffb4d1','--lavender':'#e0c9f5','--pastel-pink':'#ffc8dd','--lilac':'#d4a5f9'}},
+  pink:{name:'💖 Pink Paradise',colors:{'--bg':'#fff0f9','--surface':'#ffe5f5','--surface-hover':'#ffd0eb','--accent':'#ff69b4','--accent-dim':'#ff5ba3','--text':'#c71585','--text-dim':'#ff69b4','--red':'#ff1493','--orange':'#ffb3d9','--lavender':'#ffb3ff','--pastel-pink':'#ffc0cb','--lilac':'#ff69b4'}},
+  cerulean:{name:'💙 Cerulean Blue',colors:{'--bg':'#eef7fc','--surface':'#ffffff','--surface-hover':'#e0f0fa','--accent':'#2f9bd6','--accent-dim':'#2685bd','--text':'#1c3a4a','--text-dim':'#5b7d90','--red':'#e2574c','--orange':'#f4a259','--lavender':'#bfe3f5','--pastel-pink':'#aee0f5','--lilac':'#20b2aa'}},
+  sage:{name:'💚 Sage Green',colors:{'--bg':'#f4f7f0','--surface':'#ffffff','--surface-hover':'#e8efe0','--accent':'#87986b','--accent-dim':'#6f8354','--text':'#3c4a30','--text-dim':'#7c8a6a','--red':'#c0604f','--orange':'#d99a55','--lavender':'#c9dbb0','--pastel-pink':'#e6efd7','--lilac':'#5c8a4c'}}
+};
+let currentDateKey = getTodayKey();
+let selectedCategories = categories.map(c=>c.id);
+let selectedGoalsForChart = [];
+let multiRingChartInstance=null, goalBalanceChartInstance=null;
+let draggedIndex=null;
+let draggedCategoryIndex=null;
+
+function saveData(){
+  try {
+    localStorage.setItem('goals',JSON.stringify(goals));
+    localStorage.setItem('trackerData',JSON.stringify(data));
+    localStorage.setItem('goalMetadata',JSON.stringify(goalMetadata));
+    localStorage.setItem('currentTheme',currentTheme);
+    localStorage.setItem('userProgress',JSON.stringify(userProgress));
+    localStorage.setItem('experiments',JSON.stringify(experiments));
+    localStorage.setItem('categories',JSON.stringify(categories));
+    localStorage.setItem('priorities',JSON.stringify(priorities));
+  } catch(e) {
+    if(e.name === 'QuotaExceededError') {
+      alert('Storage quota exceeded! Please export your data and clear old entries.');
+    }
+  }
+}
+
+function getTodayKey(){return new Date().toISOString().split('T')[0]}
+
+// Goal completion states: 0 = not done, 1 = mini/minimum-viable version, 2 = full completion.
+// Old data used plain booleans (true/false); this keeps that data readable.
+function normalizeState(v){
+  if(v===true) return 2;
+  if(v===false||v===undefined||v===null) return 0;
+  return v;
+}
+function goalState(dateKey,gi){
+  if(!data[dateKey]) return 0;
+  return normalizeState(data[dateKey][gi]);
+}
+
+function applyTheme(t){
+  const theme=themes[t];if(!theme)return;
+  const r=document.documentElement;
+  Object.keys(theme.colors).forEach(k=>r.style.setProperty(k,theme.colors[k]));
+  currentTheme=t;saveData();createGlitter(window.innerWidth/2,window.innerHeight/2);
+}
+
+function renderThemeSelector(){
+  const s=document.getElementById('themeSelector');if(!s)return;s.innerHTML='';
+  Object.keys(themes).forEach(k=>{
+    const t=themes[k],o=document.createElement('div');
+    o.className='theme-option'+(k===currentTheme?' active':'');
+    o.style.background=t.colors['--bg'];o.style.color=t.colors['--text'];
+    o.innerHTML=t.name;
+    o.onclick=()=>{applyTheme(k);renderThemeSelector()};
+    s.appendChild(o);
+  });
+}
+
+function createGlitter(x,y){
+  for(let i=0;i<8;i++){
+    const g=document.createElement('div');g.className='glitter';
+    g.style.left=x+(Math.random()-.5)*100+'px';g.style.top=y+(Math.random()-.5)*100+'px';
+    document.body.appendChild(g);setTimeout(()=>g.remove(),1500);
+  }
+}
+
+function createConfetti(){
+  const colors=['#d4a5f9','#ffc8dd','#e0c9f5'];
+  for(let i=0;i<30;i++)setTimeout(()=>{
+    const c=document.createElement('div');c.className='confetti';
+    c.style.left=Math.random()*100+'%';c.style.background=colors[Math.floor(Math.random()*colors.length)];
+    document.body.appendChild(c);setTimeout(()=>c.remove(),3000);
+  },i*30);
+}
+
+function handleDragStart(e,i){draggedIndex=i;e.currentTarget.classList.add('dragging')}
+function handleDragEnd(e){e.currentTarget.classList.remove('dragging')}
+function handleDragOver(e){e.preventDefault()}
+function handleDrop(e,dropIdx){
+  e.preventDefault();if(draggedIndex===null||draggedIndex===dropIdx)return;
+  const[mg]=goals.splice(draggedIndex,1);goals.splice(dropIdx,0,mg);
+  Object.keys(data).forEach(date=>{if(data[date]&&data[date].length){const[mv]=data[date].splice(draggedIndex,1);data[date].splice(dropIdx,0,mv)}});
+  saveData();renderSettings();draggedIndex=null;
+}
+
+function initDate(dk){if(!data[dk]){data[dk]=goals.map(()=>0);saveData()}}
+function changeDate(ds){currentDateKey=ds;initDate(ds);renderToday()}
+function navigateDate(d){
+  const c=new Date(currentDateKey);c.setDate(c.getDate()+d);
+  currentDateKey=c.toISOString().split('T')[0];
+  document.getElementById('dateInput').value=currentDateKey;
+  initDate(currentDateKey);renderToday();
+}
+
+function switchView(view){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));
+  const el=document.getElementById(view+'View');
+  if(el)el.classList.add('active');
+  document.querySelectorAll('.view-btn').forEach(b=>{
+    if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes("'"+view+"'"))b.classList.add('active');
+  });
+  if(view==='stats')renderStats();
+  if(view==='settings')renderSettings();
+}
+
+function toggleFull(idx,el){
+  initDate(currentDateKey);
+  if(!data[currentDateKey])data[currentDateKey]=goals.map(()=>0);
+  const cur=goalState(currentDateKey,idx);
+  const next=cur===2?0:2;
+  data[currentDateKey][idx]=next;
+  saveData();
+  renderToday();
+  if(next===2){
+    const item=el&&el.closest('.goal-item');
+    if(item){const r=item.getBoundingClientRect();createGlitter(r.left+r.width/2,r.top+r.height/2)}
+  }
+}
+
+function toggleMini(idx,el){
+  initDate(currentDateKey);
+  if(!data[currentDateKey])data[currentDateKey]=goals.map(()=>0);
+  const cur=goalState(currentDateKey,idx);
+  const next=cur===1?0:1;
+  data[currentDateKey][idx]=next;
+  saveData();
+  renderToday();
+  if(next===1){
+    const item=el&&el.closest('.goal-item');
+    if(item){const r=item.getBoundingClientRect();createGlitter(r.left+r.width/2,r.top+r.height/2)}
+  }
+}
+
+function calculateStreak(gi){
+  const today=getTodayKey(),all=Object.keys(data).sort(),ti=all.indexOf(today);
+  if(ti===-1||goalState(today,gi)===0)return 0;
+  let s=0;
+  for(let i=ti;i>=0;i--){
+    if(i<ti){const p=new Date(all[i]),n=new Date(all[i+1]);if(Math.round((n-p)/86400000)>1)break}
+    if(goalState(all[i],gi)>0)s++;else break;
+  }
+  return s;
+}
+
+function calculateBestStreak(gi){
+  const dates=Object.keys(data).sort();let best=0,cur=0;
+  for(let i=0;i<dates.length;i++){
+    if(goalState(dates[i],gi)>0){
+      if(i>0){const d=Math.round((new Date(dates[i])-new Date(dates[i-1]))/86400000);cur=d===1?cur+1:1}else cur=1;
+      best=Math.max(best,cur);
+    }else cur=0;
+  }
+  return best;
+}
+
+function calculateSuccessRate(gi){
+  const dates=Object.keys(data);if(!dates.length)return 0;
+  return Math.round(dates.filter(d=>goalState(d,gi)>0).length/dates.length*100);
+}
+
+// Finds the most recent completed streak that has since ended (used to show
+// a "restart" message instead of just a bare 0 when someone falls off track).
+function getLastStreakInfo(gi){
+  const dates=Object.keys(data).filter(d=>data[d]&&data[d][gi]!==undefined).sort();
+  if(!dates.length)return null;
+  let runs=[],curLen=0,prevDate=null;
+  dates.forEach(d=>{
+    const done=goalState(d,gi)>0;
+    if(done){
+      if(prevDate){
+        const diff=Math.round((new Date(d)-new Date(prevDate))/86400000);
+        curLen=diff===1?curLen+1:1;
+      }else curLen=1;
+      prevDate=d;
+    }else{
+      if(curLen>0)runs.push({length:curLen,end:prevDate});
+      curLen=0;prevDate=null;
+    }
+  });
+  if(curLen>0)runs.push({length:curLen,end:prevDate});
+  if(!runs.length)return null;
+  const last=runs[runs.length-1];
+  const daysSince=Math.round((new Date(getTodayKey())-new Date(last.end))/86400000);
+  return {length:last.length,daysSince};
+}
+
+function renderToday(){
+  initDate(currentDateKey);
+  const d=new Date(currentDateKey+'T00:00:00');
+  document.getElementById('dateInput').value=currentDateKey;
+  document.getElementById('dateDisplay').textContent=d.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const gl=document.getElementById('goalsList');gl.innerHTML='';
+  const grp={};categories.forEach(c=>grp[c.id]=[]);
+  goals.forEach((g,i)=>{
+    const catId=goalMetadata[i]?.category;
+    const target=grp[catId]!==undefined?catId:'uncategorized';
+    grp[target].push({goal:g,index:i});
+  });
+  categories.forEach(cat=>{
+    const gc=grp[cat.id];if(!gc||!gc.length)return;
+    const cg=document.createElement('div');cg.className='category-group';
+    const ch=document.createElement('div');ch.className='category-header';ch.style.borderLeftColor=cat.color;
+    ch.innerHTML='<h3>'+cat.name+'</h3>';cg.appendChild(ch);
+    gc.forEach(({goal,index})=>{
+      const streak=calculateStreak(index),state=goalState(currentDateKey,index);
+      const itemClass='goal-item'+(state===2?' completed':'')+(state===1?' mini-logged':'');
+      const gi=document.createElement('div');gi.className=itemClass;
+      let restartHtml='';
+      if(streak===0){
+        const info=getLastStreakInfo(index);
+        if(info){
+          const when=info.daysSince<=0?'today':(info.daysSince===1?'yesterday':info.daysSince+' days ago');
+          restartHtml='<div class="restart-info">↩️ Last streak: '+info.length+' day'+(info.length===1?'':'s')+' · ended '+when+'</div>';
+        }
+      }
+      gi.innerHTML='<div class="goal-info"><div class="goal-name">'+goal+'</div><div class="streak-info"><span>'+(streak>0?'🔥':'💤')+'</span><span>'+streak+' day streak</span></div>'+restartHtml+'</div>'+
+        '<div class="goal-actions">'+
+          '<button class="toggle-btn mini-btn'+(state===1?' active':'')+'" title="Log minimum version" onclick="toggleMini('+index+',this)">~</button>'+
+          '<button class="toggle-btn'+(state===2?' active':'')+'" title="Mark fully done" onclick="toggleFull('+index+',this)">'+(state===2?'✓':'')+'</button>'+
+        '</div>';
+      cg.appendChild(gi);
+    });
+    gl.appendChild(cg);
+  });
+  renderPriorityCard();
+}
+
+// ============================================================
+// TOP 3 PRIORITIES (per month)
+// ============================================================
+function getCurrentMonthKey(){return getTodayKey().slice(0,7)}
+function getMonthLabel(){return new Date(currentDateKey+'T00:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'})}
+function getMonthPriorityItems(){
+  const key=getCurrentMonthKey();
+  return (priorities[key]&&priorities[key].items)||[];
+}
+
+function renderPriorityCard(){
+  const label=document.getElementById('priorityMonthLabel');
+  if(label)label.textContent=getMonthLabel();
+  const disp=document.getElementById('priorityDisplay');
+  if(!disp)return;
+  const items=getMonthPriorityItems();
+  const rendered=items.map(item=>{
+    if(item.type==='goal'){
+      const idx=item.goalIndex;
+      if(idx===undefined||idx===null||!goals[idx])return '';
+      const state=goalState(currentDateKey,idx);
+      const streak=calculateStreak(idx);
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg);border-radius:8px;margin-bottom:8px;">'+
+        '<div><strong>'+goals[idx]+'</strong><div style="font-size:.8rem;color:var(--text-dim);">'+(streak>0?'🔥 ':'💤 ')+streak+' day streak</div></div>'+
+        '<div class="goal-actions">'+
+          '<button class="toggle-btn mini-btn'+(state===1?' active':'')+'" title="Log minimum version" onclick="toggleMini('+idx+',this)">~</button>'+
+          '<button class="toggle-btn'+(state===2?' active':'')+'" title="Mark fully done" onclick="toggleFull('+idx+',this)">'+(state===2?'✓':'')+'</button>'+
+        '</div></div>';
+    }else{
+      return '<div style="padding:10px;background:var(--bg);border-radius:8px;margin-bottom:8px;"><strong>'+(item.text||'')+'</strong><div style="font-size:.75rem;color:var(--text-dim);">Custom priority</div></div>';
+    }
+  }).filter(Boolean).join('');
+  disp.innerHTML=rendered||'<p style="color:var(--text-dim);font-size:.9rem;margin:0;">No priorities set yet for '+getMonthLabel()+'. Tap Edit to choose up to 3.</p>';
+}
+
+function togglePriorityEdit(){
+  const panel=document.getElementById('priorityEditPanel');
+  if(!panel)return;
+  const opening=panel.style.display==='none'||!panel.style.display;
+  if(opening){openPriorityEditor();panel.style.display='block'}
+  else{panel.style.display='none'}
+}
+
+function openPriorityEditor(){
+  const items=getMonthPriorityItems();
+  priorityEditWorking=[0,1,2].map(i=>items[i]?Object.assign({},items[i]):null);
+  const panel=document.getElementById('priorityEditPanel');if(!panel)return;
+  let html='';
+  for(let slot=0;slot<3;slot++){
+    const item=priorityEditWorking[slot];
+    let selVal='';let customText='';
+    if(item){
+      if(item.type==='goal')selVal='goal:'+item.goalIndex;
+      else{selVal='custom';customText=item.text||''}
+    }
+    let opts='<option value=""'+(selVal===''?' selected':'')+'>— empty —</option>'+
+      '<option value="custom"'+(selVal==='custom'?' selected':'')+'>✏️ Custom note</option>';
+    goals.forEach((g,i)=>{opts+='<option value="goal:'+i+'"'+(selVal==='goal:'+i?' selected':'')+'>'+g+'</option>'});
+    html+='<div style="display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap;">'+
+      '<select class="priority-select" onchange="onPrioritySelectChange('+slot+',this.value)" style="flex:1;min-width:150px;padding:8px;border:1px solid var(--accent-dim);border-radius:8px;background:var(--surface);color:var(--text);">'+opts+'</select>'+
+      '<input type="text" class="priority-custom-input" data-slot="'+slot+'" placeholder="Type a priority..." value="'+customText.replace(/"/g,'&quot;')+'" style="flex:1;min-width:150px;padding:8px;border:1px solid var(--accent-dim);border-radius:8px;background:var(--surface);color:var(--text);display:'+(selVal==='custom'?'block':'none')+';" oninput="onPriorityCustomInput('+slot+',this.value)">'+
+    '</div>';
+  }
+  html+='<div style="display:flex;gap:10px;margin-top:10px;"><button onclick="savePrioritiesFromPanel()" class="experiment-btn primary" style="flex:1;">Save</button><button onclick="togglePriorityEdit()" class="experiment-btn secondary">Cancel</button></div>';
+  panel.innerHTML=html;
+}
+
+function onPrioritySelectChange(slot,val){
+  const input=document.querySelector('.priority-custom-input[data-slot="'+slot+'"]');
+  if(val==='custom'){
+    priorityEditWorking[slot]={type:'custom',text:(priorityEditWorking[slot]&&priorityEditWorking[slot].text)||''};
+    if(input)input.style.display='block';
+  }else if(val===''){
+    priorityEditWorking[slot]=null;
+    if(input)input.style.display='none';
+  }else if(val.indexOf('goal:')===0){
+    const idx=parseInt(val.split(':')[1],10);
+    priorityEditWorking[slot]={type:'goal',goalIndex:idx};
+    if(input)input.style.display='none';
+  }
+}
+
+function onPriorityCustomInput(slot,val){
+  if(!priorityEditWorking[slot]||priorityEditWorking[slot].type!=='custom')priorityEditWorking[slot]={type:'custom',text:''};
+  priorityEditWorking[slot].text=val;
+}
+
+function savePrioritiesFromPanel(){
+  const key=getCurrentMonthKey();
+  const items=priorityEditWorking.filter(it=>it&&(it.type==='goal'||(it.type==='custom'&&it.text&&it.text.trim())));
+  items.forEach(it=>{if(it.type==='custom')it.text=it.text.trim()});
+  priorities[key]={items:items};
+  saveData();
+  const panel=document.getElementById('priorityEditPanel');if(panel)panel.style.display='none';
+  renderPriorityCard();
+}
+
+function renderStats(){
+  const gs=document.getElementById('goalStats');if(!gs)return;gs.innerHTML='';
+  
+  // Initialize selected goals if empty
+  if(!selectedGoalsForChart || selectedGoalsForChart.length === 0){
+    selectedGoalsForChart = goals.map((_,idx)=>idx);
+  }
+  
+  // Render filter buttons
+  renderHabitFilter();
+  
+  // Render frequency progress bars
+  renderFrequencyProgress();
+  
+  // Render circular heatmap
+  renderMultiRingChart();
+  
+  goals.forEach((g,i)=>{
+    const s=calculateStreak(i),b=calculateBestStreak(i),r=calculateSuccessRate(i);
+    const t=Object.keys(data).filter(d=>goalState(d,i)>0).length;
+    const miniCount=Object.keys(data).filter(d=>goalState(d,i)===1).length;
+    const si=document.createElement('div');si.className='goal-stat-item';
+    let restartHtml='';
+    if(s===0){
+      const info=getLastStreakInfo(i);
+      if(info){
+        const when=info.daysSince<=0?'today':(info.daysSince===1?'yesterday':info.daysSince+' days ago');
+        restartHtml='<div class="restart-info">↩️ Last streak: '+info.length+' day'+(info.length===1?'':'s')+' · ended '+when+'</div>';
+      }
+    }
+    si.innerHTML='<div class="goal-stat-header"><div class="goal-stat-name">'+g+'</div><div style="color:var(--lilac);font-weight:700;">'+r+'%</div></div><div class="goal-heatmap" id="heatmap-'+i+'"></div><div class="mini-stats"><span>🔥 '+s+' days</span><span>🏆 Best: '+b+'</span><span>✓ '+t+' total</span>'+(miniCount>0?'<span>~ '+miniCount+' mini</span>':'')+'</div>'+restartHtml;
+    gs.appendChild(si);
+    renderGoalHeatmap(i);
+  });
+}
+
+function renderHabitFilter(){
+  const container = document.getElementById('habitFilterContainer');
+  if(!container) return;
+  container.innerHTML = '';
+  
+  // "All" button
+  const allBtn = document.createElement('button');
+  allBtn.className = 'filter-btn' + (selectedGoalsForChart.length === goals.length ? ' active' : '');
+  allBtn.textContent = 'All';
+  allBtn.onclick = () => {
+    selectedGoalsForChart = goals.map((_,idx)=>idx);
+    renderHabitFilter();
+    renderMultiRingChart();
+  };
+  container.appendChild(allBtn);
+  
+  // Individual habit buttons
+  goals.forEach((g, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn' + (selectedGoalsForChart.includes(i) ? ' active' : '');
+    btn.textContent = g.length > 20 ? g.substring(0, 18) + '...' : g;
+    btn.onclick = () => toggleHabitFilter(i);
+    container.appendChild(btn);
+  });
+}
+
+function toggleHabitFilter(idx){
+  if(selectedGoalsForChart.includes(idx)){
+    selectedGoalsForChart = selectedGoalsForChart.filter(i => i !== idx);
+  } else {
+    selectedGoalsForChart.push(idx);
+    selectedGoalsForChart.sort((a,b) => a - b);
+  }
+  
+  // Ensure at least one is selected
+  if(selectedGoalsForChart.length === 0){
+    selectedGoalsForChart = [idx];
+  }
+  
+  renderHabitFilter();
+  renderMultiRingChart();
+}
+
+function renderFrequencyProgress(){
+  const container = document.getElementById('frequencyProgressBars');
+  const section = document.getElementById('frequencyProgressSection');
+  if(!container || !section) return;
+  
+  // Get habits with frequency tracking enabled
+  const frequencyGoals = goals.map((g, i) => {
+    const meta = goalMetadata[i] || {};
+    if(!meta.frequencyEnabled) return null;
+    
+    const target = meta.frequencyTarget || 3;
+    const period = meta.frequencyPeriod || 'week';
+    
+    // Calculate current count for this week/month
+    const today = new Date();
+    let startDate;
+    
+    if(period === 'week'){
+      const dayOfWeek = today.getDay();
+      startDate = new Date(today);
+      startDate.setDate(today.getDate() - dayOfWeek);
+    } else {
+      startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+    }
+    
+    let count = 0;
+    for(let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)){
+      const dk = d.toISOString().split('T')[0];
+      if(goalState(dk, i) > 0){
+        count++;
+      }
+    }
+    
+    const percentage = Math.min((count / target) * 100, 100);
+    
+    return {
+      name: g,
+      count: count,
+      target: target,
+      period: period,
+      percentage: percentage,
+      complete: count >= target
+    };
+  }).filter(Boolean);
+  
+  if(frequencyGoals.length === 0){
+    section.style.display = 'none';
+    return;
+  }
+  
+  section.style.display = 'block';
+  container.innerHTML = frequencyGoals.map(fg => 
+    '<div class="frequency-progress-item">'+
+      '<div class="frequency-header">'+
+        '<div class="frequency-name">'+fg.name+'</div>'+
+        '<div class="frequency-count">'+fg.count+'/'+fg.target+' this '+fg.period+'</div>'+
+      '</div>'+
+      '<div class="frequency-bar">'+
+        '<div class="frequency-fill'+(fg.complete?' complete':'')+'" style="width:'+fg.percentage+'%"></div>'+
+      '</div>'+
+      '<div class="frequency-status">'+(fg.complete ? '✓ Target reached!' : (fg.count > 0 ? 'Keep going!' : 'Start today!'))+'</div>'+
+    '</div>'
+  ).join('');
+}
+
+function renderGoalHeatmap(gi){
+  const c=document.getElementById('heatmap-'+gi);if(!c)return;c.innerHTML='';
+  const today=new Date();
+  for(let i=89;i>=0;i--){
+    const d=new Date(today);d.setDate(d.getDate()-i);const dk=d.toISOString().split('T')[0];
+    const cell=document.createElement('div');cell.className='heatmap-cell';
+    cell.title=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+    if(data[dk]&&data[dk][gi]!==undefined){
+      const st=goalState(dk,gi);
+      if(st===2){cell.classList.add('done');cell.title+=' ✓ Completed'}
+      else if(st===1){cell.classList.add('mini');cell.title+=' ~ Minimum version'}
+      else{cell.classList.add('not-done');cell.title+=' ✗ Not done'}
+    }
+    else{cell.classList.add('empty');cell.title+=' (Not tracked)'}
+    c.appendChild(cell);
+  }
+}
+
+function getLast30DaysData(){
+  const out=[],today=new Date();
+  for(let i=29;i>=0;i--){const d=new Date(today);d.setDate(d.getDate()-i);const dk=d.toISOString().split('T')[0];out.push({date:dk,data:data[dk]||goals.map(()=>0)})}
+  return out;
+}
+
+function renderMultiRingChart(){
+  const canvas=document.getElementById('multiRingChart');if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  
+  // Clear any existing chart
+  if(multiRingChartInstance){multiRingChartInstance.destroy();multiRingChartInstance=null}
+  
+  const l30=getLast30DaysData();
+  const cx=canvas.width/2;
+  const circH=340;
+  const cy=circH/2+10;
+  const maxR=Math.min(cx-20,circH/2-20);
+  
+  // Use filtered goals
+  const displayGoals = selectedGoalsForChart || goals.map((_,idx)=>idx);
+  const numR=displayGoals.length;
+  
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  
+  if(!numR){
+    ctx.font='14px sans-serif';
+    ctx.fillStyle='#8a7d9b';
+    ctx.textAlign='center';
+    ctx.fillText('No habits selected',cx,cy);
+    return;
+  }
+  
+  const rw=(maxR-20)/numR;
+  const ringColors=['hsla(270,70%,65%,.9)','hsla(320,70%,65%,.9)','hsla(200,70%,60%,.9)','hsla(160,60%,55%,.9)','hsla(30,70%,60%,.9)','hsla(100,60%,55%,.9)','hsla(350,70%,65%,.9)','hsla(180,65%,55%,.9)','hsla(45,75%,60%,.9)','hsla(280,65%,60%,.9)','hsla(15,70%,65%,.9)','hsla(140,60%,50%,.9)','hsla(240,70%,65%,.9)','hsla(60,70%,60%,.9)','hsla(300,65%,60%,.9)'];
+  
+  // Draw rings for each selected goal
+  displayGoals.forEach((goalIdx,ri)=>{
+    const outerR=maxR-(ri*rw);
+    const innerR=outerR-rw+2;
+    const barAngle=(2*Math.PI)/30;
+    const gapAngle=barAngle*0.1;
+    
+    l30.forEach((day,di)=>{
+      const startAngle=di*barAngle-Math.PI/2;
+      const endAngle=startAngle+barAngle-gapAngle;
+      
+      // Color based on completion state: full = solid ring color, mini = lighter version, none = pink/gray
+      const st=normalizeState(day.data[goalIdx]);
+      const hasData=data[day.date]!==undefined;
+      let color;
+      if(st===2){
+        color=ringColors[ri%ringColors.length];
+      }else if(st===1){
+        color=ringColors[ri%ringColors.length].replace(/,\s*\.?\d+(\.\d+)?\)$/,',.35)');
+      }else{
+        color=hasData?'#ffccd5':'#e5e7eb';
+      }
+      
+      // Draw arc segment
+      ctx.beginPath();
+      ctx.arc(cx,cy,outerR,startAngle,endAngle);
+      ctx.arc(cx,cy,innerR,endAngle,startAngle,true);
+      ctx.closePath();
+      ctx.fillStyle=color;
+      ctx.fill();
+    });
+  });
+  
+  // Draw center circle
+  ctx.beginPath();
+  ctx.arc(cx,cy,maxR-(numR*rw),0,2*Math.PI);
+  ctx.fillStyle='white';
+  ctx.fill();
+  ctx.strokeStyle='#e0c9f5';
+  ctx.lineWidth=1;
+  ctx.stroke();
+  
+  // Draw legend
+  const legendY=circH+20;
+  displayGoals.forEach((goalIdx,idx)=>{
+    const y=legendY+(idx*16);
+    ctx.fillStyle=ringColors[idx%ringColors.length];
+    ctx.fillRect(15,y,12,12);
+    ctx.font='11px sans-serif';
+    ctx.fillStyle='#4a3f5c';
+    ctx.textAlign='left';
+    let name=goals[goalIdx];
+    if(name.length>35)name=name.substring(0,33)+'...';
+    ctx.fillText(name,31,y+9);
+  });
+}
+
+function renderSettings(){
+  renderThemeSelector();
+  renderCategorySettings();
+  const gs=document.getElementById('goalSettings');if(!gs)return;gs.innerHTML='';
+  goals.forEach((g,i)=>{
+    const m=goalMetadata[i]||{},si=document.createElement('div');si.className='goal-setting-item';si.draggable=true;
+    si.ondragstart=e=>handleDragStart(e,i);si.ondragend=handleDragEnd;si.ondragover=handleDragOver;si.ondrop=e=>handleDrop(e,i);
+    const catId=(m.category!==undefined&&categories.find(c=>c.id===m.category))?m.category:'uncategorized';
+    const co=categories.map(c=>'<option value="'+c.id+'"'+(catId===c.id?' selected':'')+'>'+c.name+'</option>').join('');
+    si.innerHTML='<div class="goal-setting-row"><span style="cursor:move;margin-right:8px;">☰</span><input type="text" class="goal-input" value="'+g.replace(/"/g,'&quot;')+'" onchange="updateGoal('+i+',this.value)" placeholder="Goal name"/><button class="delete-btn" onclick="deleteGoal('+i+')">Delete</button></div>'+
+    '<div class="goal-setting-row"><span class="start-date-label">Category:</span><select class="category-selector" onchange="updateCategory('+i+',this.value)">'+co+'</select></div>'+
+    '<div class="goal-setting-row"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox"'+(m.frequencyEnabled?' checked':'')+' onchange="toggleFrequency('+i+',this.checked)"><span>Track frequency (weekly/monthly target)</span></label></div>'+
+    (m.frequencyEnabled?'<div class="goal-setting-row" style="gap:8px;padding-left:30px;"><input type="number" class="start-date-input" style="width:60px;" value="'+(m.frequencyTarget||3)+'" min="1" max="31" onchange="updateFrequencyTarget('+i+',this.value)"><span style="font-size:.9rem;">times per</span><select class="category-selector" style="width:auto;" onchange="updateFrequencyPeriod('+i+',this.value)"><option value="week"'+(m.frequencyPeriod==='week'?' selected':'')+'>Week</option><option value="month"'+(m.frequencyPeriod==='month'?' selected':'')+'>Month</option></select></div>':'')+
+    '<div class="goal-setting-row"><span class="start-date-label">Start:</span><input type="date" class="start-date-input" value="'+(m.startDate||'')+'" onchange="updateStartDate('+i+',this.value)"/></div>'+
+    '<div class="goal-setting-row"><span class="start-date-label">End:</span><input type="date" class="start-date-input" value="'+(m.endDate||'')+'" onchange="updateEndDate('+i+',this.value)"/></div>';
+    gs.appendChild(si);
+  });
+}
+
+// ============================================================
+// CUSTOM CATEGORIES
+// ============================================================
+function renderCategorySettings(){
+  const cs=document.getElementById('categorySettings');if(!cs)return;cs.innerHTML='';
+  categories.forEach((cat,i)=>{
+    const isUncategorized = cat.id === 'uncategorized';
+    const row=document.createElement('div');
+    row.className='goal-setting-item';
+    row.draggable=!isUncategorized;
+    row.style.padding='10px 15px';
+    if(!isUncategorized){
+      row.ondragstart=e=>handleCategoryDragStart(e,i);
+      row.ondragend=handleDragEnd;
+      row.ondragover=handleDragOver;
+      row.ondrop=e=>handleCategoryDrop(e,i);
+    }
+    row.innerHTML =
+      '<div class="goal-setting-row" style="margin-bottom:0;">'+
+        (isUncategorized?'<span style="width:16px;"></span>':'<span style="cursor:move;">☰</span>')+
+        '<input type="color" value="'+cat.color+'" style="width:36px;height:36px;border:none;border-radius:8px;cursor:pointer;padding:0;" onchange="updateCategoryColor(\''+cat.id+'\',this.value)">'+
+        '<input type="text" class="goal-input" value="'+cat.name.replace(/"/g,'&quot;')+'" onchange="updateCategoryName(\''+cat.id+'\',this.value)" placeholder="Category name">'+
+        (isUncategorized?'':'<button class="delete-btn" onclick="deleteCategory(\''+cat.id+'\')">Delete</button>')+
+      '</div>';
+    cs.appendChild(row);
+  });
+}
+
+function addCategory(){
+  const name = prompt('Category name (an emoji at the start looks nice, e.g. "🌱 Growth"):');
+  if(!name || !name.trim()) return;
+  const palette = ['#ff6b9d','#6bb6ff','#d4a5f9','#ffc8dd','#9b7fbb','#7cc97f','#ff9a76','#5fd0c9','#f4b942','#c4a4a4'];
+  const color = palette[categories.length % palette.length];
+  const id = 'cat_' + Date.now() + '_' + Math.floor(Math.random()*1000);
+  // Insert before 'uncategorized' so it stays last
+  const uncatIdx = categories.findIndex(c=>c.id==='uncategorized');
+  const newCat = {id,name:name.trim(),color};
+  if(uncatIdx===-1) categories.push(newCat);
+  else categories.splice(uncatIdx,0,newCat);
+  saveData();
+  renderCategorySettings();
+  renderSettings();
+}
+
+function updateCategoryName(id,name){
+  const cat=categories.find(c=>c.id===id);if(!cat)return;
+  cat.name = name.trim() || cat.name;
+  saveData();
+  renderSettings();
+  renderToday();
+}
+
+function updateCategoryColor(id,color){
+  const cat=categories.find(c=>c.id===id);if(!cat)return;
+  cat.color = color;
+  saveData();
+  renderToday();
+}
+
+function deleteCategory(id){
+  if(id==='uncategorized')return;
+  const cat=categories.find(c=>c.id===id);if(!cat)return;
+  if(!confirm('Delete category "'+cat.name+'"? Goals in it will move to Uncategorized.'))return;
+  categories = categories.filter(c=>c.id!==id);
+  Object.keys(goalMetadata).forEach(i=>{
+    if(goalMetadata[i] && goalMetadata[i].category===id){
+      goalMetadata[i].category='uncategorized';
+    }
+  });
+  saveData();
+  renderCategorySettings();
+  renderSettings();
+  renderToday();
+}
+
+function handleCategoryDragStart(e,i){draggedCategoryIndex=i;e.currentTarget.classList.add('dragging')}
+function handleCategoryDrop(e,dropIdx){
+  e.preventDefault();
+  if(draggedCategoryIndex===null||draggedCategoryIndex===dropIdx)return;
+  // Don't allow dropping onto/past the uncategorized slot
+  if(categories[dropIdx].id==='uncategorized'){draggedCategoryIndex=null;return}
+  const [moved]=categories.splice(draggedCategoryIndex,1);
+  categories.splice(dropIdx,0,moved);
+  saveData();
+  renderCategorySettings();
+  renderToday();
+  draggedCategoryIndex=null;
+}
+
+function updateCategory(i,v){if(!goalMetadata[i])goalMetadata[i]={};goalMetadata[i].category=v;saveData();renderToday()}
+function toggleFrequency(i,e){if(!goalMetadata[i])goalMetadata[i]={};goalMetadata[i].frequencyEnabled=e;if(e&&!goalMetadata[i].frequencyTarget){goalMetadata[i].frequencyTarget=3;goalMetadata[i].frequencyPeriod='week'}saveData();renderSettings()}
+function updateFrequencyTarget(i,v){if(!goalMetadata[i])goalMetadata[i]={};goalMetadata[i].frequencyTarget=parseInt(v);saveData()}
+function updateFrequencyPeriod(i,v){if(!goalMetadata[i])goalMetadata[i]={};goalMetadata[i].frequencyPeriod=v;saveData()}
+function updateStartDate(i,v){if(!goalMetadata[i])goalMetadata[i]={};goalMetadata[i].startDate=v;saveData()}
+function updateEndDate(i,v){if(!goalMetadata[i])goalMetadata[i]={};goalMetadata[i].endDate=v;saveData()}
+function updateGoal(i,n){goals[i]=n;saveData()}
+function addGoal(){const n=prompt('Enter new goal:');if(n){goals.push(n);Object.keys(data).forEach(d=>data[d].push(0));saveData();renderSettings();renderToday()}}
+function deleteGoal(i){
+  if(!confirm('Delete this goal?'))return;
+  goals.splice(i,1);
+  Object.keys(data).forEach(d=>{if(data[d])data[d].splice(i,1)});
+  // Reindex goalMetadata so category/frequency settings stay attached to the right goal
+  const newMeta={};
+  Object.keys(goalMetadata).forEach(k=>{
+    const idx=parseInt(k,10);
+    if(idx<i)newMeta[idx]=goalMetadata[k];
+    else if(idx>i)newMeta[idx-1]=goalMetadata[k];
+  });
+  goalMetadata=newMeta;
+  // Reindex/drop priority references to this goal across all months
+  Object.keys(priorities).forEach(mk=>{
+    const items=priorities[mk]&&priorities[mk].items;
+    if(!items)return;
+    priorities[mk].items=items.map(it=>{
+      if(it.type!=='goal')return it;
+      if(it.goalIndex===i)return null;
+      if(it.goalIndex>i)return {type:'goal',goalIndex:it.goalIndex-1};
+      return it;
+    }).filter(Boolean);
+  });
+  selectedGoalsForChart=goals.map((_,idx)=>idx);
+  saveData();renderSettings();renderToday();
+}
+function resetAll(){if(confirm('Delete EVERYTHING?')){if(confirm('Last chance!')){localStorage.clear();location.reload()}}}
+
+function exportData(){
+  const s=JSON.stringify({goals,data,goalMetadata,categories,experiments,userProgress,priorities,exportDate:new Date().toISOString(),version:'3.1'},null,2);
+  const u=URL.createObjectURL(new Blob([s],{type:'application/json'})),a=document.createElement('a');
+  a.href=u;a.download='life-dashboard-backup-'+getTodayKey()+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);
+  alert('Data exported!');
+}
+
+function importData(ev){
+  const f=ev.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=e=>{
+    try{const d=JSON.parse(e.target.result);
+      if(!d.goals||!d.data){alert('Invalid file');return}
+      if(confirm('Replace all current data?')){
+        goals=d.goals;data=d.data;goalMetadata=d.goalMetadata||{};experiments=d.experiments||[];userProgress=d.userProgress||userProgress;
+        categories=d.categories||categories;
+        priorities=d.priorities||{};
+        if(!categories.find(c=>c.id==='uncategorized')) categories.push({id:'uncategorized',name:'✨ Uncategorized',color:'#c4a4a4'});
+        saveData();alert('Imported! Refreshing...');location.reload();
+      }
+    }catch(e){alert('Error reading file')}
+  };r.readAsText(f);ev.target.value='';
+}
+
+// INIT
+applyTheme(currentTheme);
+currentDateKey=getTodayKey();
+document.getElementById('dateInput').value=currentDateKey;
+renderToday();
+</script>
+
+</body>
+</html>  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  transition: all 0.3s;
+}
+
+.section {
+  display: none;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section.active {
+  display: block;
+}
+
+.view-btn {
+  padding: 10px 20px;
+  background: var(--surface);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text);
+  margin: 5px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.view-btn:hover {
+  background: var(--surface-hover);
+}
+
+.view-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.goal-item {
+  background: var(--surface);
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.goal-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.goal-item.completed {
+  opacity: 0.7;
+}
+
+.goal-info {
+  flex: 1;
+}
+
+.goal-name {
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.toggle-btn {
+  padding: 8px 16px;
+  border: 2px solid var(--accent);
+  background: transparent;
+  border-radius: 20px;
+  cursor: pointer;
+  min-width: 40px;
+  min-height: 40px;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.toggle-btn:hover {
+  background: var(--surface-hover);
+}
+
+.toggle-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.goal-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mini-btn {
+  min-width: 34px;
+  min-height: 34px;
+  padding: 6px 10px;
+  font-size: 14px;
+  border-color: var(--pastel-pink);
+  color: var(--pastel-pink);
+  background: transparent;
+}
+
+.mini-btn.active {
+  background: var(--pastel-pink);
+  color: #fff;
+  border-color: var(--pastel-pink);
+}
+
+.goal-item.mini-logged {
+  opacity: 0.85;
+}
+
+.restart-info {
+  font-size: 0.8rem;
+  color: var(--accent-dim);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.category-group {
+  margin-bottom: 20px;
+}
+
+.category-header {
+  border-left: 4px solid var(--accent);
+  padding: 10px;
+  margin-bottom: 10px;
+  background: var(--surface);
+  border-radius: 4px;
+}
+
+.category-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.streak-info {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.glitter {
+  position: fixed;
+  width: 6px;
+  height: 6px;
+  background: var(--glitter-gradient);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: sparkle 1.5s ease-out;
+  z-index: 9999;
+  box-shadow: 0 0 10px var(--glitter-glow);
+}
+
+@keyframes sparkle {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px) scale(0);
+    opacity: 0;
+  }
+}
+
+.confetti {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  top: -10px;
+  animation: fall 3s linear;
+  pointer-events: none;
+  z-index: 9999;
+  border-radius: 2px;
+}
+
+@keyframes fall {
+  to {
+    transform: translateY(100vh) rotate(360deg);
+  }
+}
+
+.theme-option, .font-option {
+  padding: 15px;
+  margin: 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+  display: inline-block;
+}
+
+.theme-option:hover, .font-option:hover {
+  border-color: var(--accent-dim);
+}
+
+.theme-option.active, .font-option.active {
+  border-color: var(--accent);
+  transform: scale(1.05);
+}
+
+.goal-setting-item {
+  background: var(--surface);
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 12px;
+  border: 2px dashed transparent;
+}
+
+.goal-setting-item.dragging {
+  opacity: 0.5;
+  border-color: var(--accent);
+}
+
+.goal-setting-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.goal-input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid var(--accent-dim);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.delete-btn {
+  padding: 8px 16px;
+  background: var(--red);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.delete-btn:hover {
+  opacity: 0.9;
+}
+
+.category-selector, .start-date-input {
+  padding: 8px;
+  border: 1px solid var(--accent-dim);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.start-date-label {
+  font-weight: 600;
+  min-width: 60px;
+}
+
+.goal-heatmap {
+  display: grid;
+  grid-template-columns: repeat(30, 1fr);
+  gap: 2px;
+  margin: 10px 0;
+}
+
+.heatmap-cell {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 2px;
+  background: #e5e7eb;
+  cursor: help;
+}
+
+.heatmap-cell.done {
+  background: var(--lilac);
+}
+
+.heatmap-cell.mini {
+  background: var(--pastel-pink);
+}
+
+.heatmap-cell.not-done {
+  background: #ffccd5;
+}
+
+.heatmap-cell.empty {
+  background: #e5e7eb;
+}
+
+.goal-stat-item {
+  background: var(--surface);
+  padding: 15px;
+  margin: 15px 0;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.goal-stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.goal-stat-name {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.mini-stats {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-top: 10px;
+}
+
+.experiment-card {
+  background: var(--surface);
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.experiment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 10px;
+}
+
+.experiment-title {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.experiment-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.experiment-btn:hover {
+  opacity: 0.9;
+}
+
+.experiment-btn.primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.experiment-btn.secondary {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.experiment-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 15px;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-content {
+  background: var(--bg);
+  padding: 30px;
+  border-radius: 16px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--accent-dim);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.initiation-btn {
+  padding: 10px 20px;
+  border: 2px solid var(--accent-dim);
+  background: var(--surface);
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text);
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.initiation-btn:hover {
+  background: var(--surface-hover);
+}
+
+.initiation-btn.selected {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.filter-btn {
+  padding: 8px 16px;
+  border: 2px solid var(--accent-dim);
+  background: var(--surface);
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.filter-btn:hover {
+  background: var(--surface-hover);
+}
+
+.filter-btn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.frequency-progress-item {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: var(--bg);
+  border-radius: 8px;
+}
+
+.frequency-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.frequency-name {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.frequency-count {
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+.frequency-bar {
+  height: 20px;
+  background: #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.frequency-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--lilac));
+  border-radius: 10px;
+  transition: width 0.3s ease;
+}
+
+.frequency-fill.complete {
+  background: linear-gradient(90deg, #4caf50, #66bb6a);
+}
+
+.frequency-status {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+#themeSelector, #fontSelector {
+  margin: 20px 0;
+}
+
+#goalStats {
+  margin-top: 20px;
+}
+
+h1 {
+  background: var(--header-bg);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+h2 {
+  color: var(--accent);
+  margin-top: 0;
+}
+
+input[type="date"] {
+  padding: 8px;
+  border: 1px solid var(--accent-dim);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+button {
+  font-family: inherit;
+}
+
+@media (max-width: 768px) {
+  body {
+    padding: 10px;
+  }
+  
+  .view-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+    margin: 3px;
+  }
+  
+  .goal-heatmap {
+    grid-template-columns: repeat(15, 1fr);
+  }
+}
+</style>
+</head>
+<body>
+
+<div style="text-align:center;margin-bottom:30px">
+<h1 style="margin:0">✨ Life Dashboard</h1>
+<div style="margin-top:20px">
+<button class="view-btn active" onclick="switchView('today')">Today</button>
+<button class="view-btn" onclick="switchView('stats')">Stats</button>
+<button class="view-btn" onclick="switchView('settings')">Settings</button>
+</div>
+</div>
+
+<div id="todayView" class="section active">
 <div style="text-align:center;margin-bottom:20px">
 <button onclick="navigateDate(-1)" class="experiment-btn secondary">←</button>
 <input type="date" id="dateInput" onchange="changeDate(this.value)" style="margin:0 10px;padding:8px">
