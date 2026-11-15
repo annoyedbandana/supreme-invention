@@ -614,7 +614,11 @@ button {
 <div id="priorityCard" style="background:var(--surface);padding:20px;border-radius:12px;margin-bottom:20px;">
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
 <h3 style="margin:0;">🎯 <span id="priorityMonthLabel"></span> Top 3</h3>
+<div style="display:flex;gap:6px;align-items:center;">
+<button id="priorityModeWeek" onclick="setPriorityMode('week')" class="filter-btn" style="padding:5px 10px;font-size:.75rem;">Week</button>
+<button id="priorityModeMonth" onclick="setPriorityMode('month')" class="filter-btn" style="padding:5px 10px;font-size:.75rem;">Month</button>
 <button onclick="togglePriorityEdit()" class="experiment-btn secondary" style="padding:6px 12px;font-size:.8rem;">Edit</button>
+</div>
 </div>
 <div id="priorityDisplay"></div>
 <div id="priorityEditPanel" style="display:none;margin-top:10px;"></div>
@@ -703,6 +707,7 @@ let userProgress = JSON.parse(localStorage.getItem('userProgress')) || {totalDay
 let experiments = JSON.parse(localStorage.getItem('experiments')) || [];
 let priorities = JSON.parse(localStorage.getItem('priorities')) || {};
 let priorityEditWorking = [null,null,null];
+let priorityMode = localStorage.getItem('priorityMode')==='month' ? 'month' : 'week';
 const themes = {
   lavender:{name:'💜 Lavender Dreams',colors:{'--bg':'#f8f4ff','--surface':'#fff','--surface-hover':'#f0ebff','--accent':'#c8a2d0','--accent-dim':'#b894c4','--text':'#4a3f5c','--text-dim':'#8a7d9b','--red':'#ff6b9d','--orange':'#ffb4d1','--lavender':'#e0c9f5','--pastel-pink':'#ffc8dd','--lilac':'#d4a5f9'}},
   pink:{name:'💖 Pink Paradise',colors:{'--bg':'#fff0f9','--surface':'#ffe5f5','--surface-hover':'#ffd0eb','--accent':'#ff69b4','--accent-dim':'#ff5ba3','--text':'#c71585','--text-dim':'#ff69b4','--red':'#ff1493','--orange':'#ffb3d9','--lavender':'#ffb3ff','--pastel-pink':'#ffc0cb','--lilac':'#ff69b4'}},
@@ -726,6 +731,7 @@ function saveData(){
     localStorage.setItem('experiments',JSON.stringify(experiments));
     localStorage.setItem('categories',JSON.stringify(categories));
     localStorage.setItem('priorities',JSON.stringify(priorities));
+    localStorage.setItem('priorityMode',priorityMode);
   } catch(e) {
     if(e.name === 'QuotaExceededError') {
       alert('Storage quota exceeded! Please export your data and clear old entries.');
@@ -982,21 +988,50 @@ function renderToday(){
 }
 
 // ============================================================
-// TOP 3 PRIORITIES (per month)
+// TOP 3 PRIORITIES (per week or per month, your choice)
 // ============================================================
-function getCurrentMonthKey(){return getTodayKey().slice(0,7)}
-function getMonthLabel(){return parseKey(currentDateKey).toLocaleDateString('en-US',{month:'long',year:'numeric'})}
-function getMonthPriorityItems(){
-  const key=getCurrentMonthKey();
+// Weeks start on Sunday (same as the weekly frequency bars). Month picks keep their old 'YYYY-MM' keys; week picks use 'w:YYYY-MM-DD' (the Sunday).
+function weekStartOf(d){const s=new Date(d.getFullYear(),d.getMonth(),d.getDate());s.setDate(s.getDate()-s.getDay());return s}
+function getPriorityKey(offset){
+  const d=parseKey(currentDateKey);
+  if(priorityMode==='week'){const s=weekStartOf(d);s.setDate(s.getDate()+7*(offset||0));return 'w:'+dateKey(s)}
+  const m=new Date(d.getFullYear(),d.getMonth()+(offset||0),1);return dateKey(m).slice(0,7);
+}
+function getPriorityLabel(){
+  const d=parseKey(currentDateKey);
+  if(priorityMode==='week'){
+    const s=weekStartOf(d),e=new Date(s);e.setDate(e.getDate()+6);
+    const f=x=>x.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    return 'Week of '+f(s)+' – '+f(e);
+  }
+  return d.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+}
+function getPriorityItems(offset){
+  const key=getPriorityKey(offset);
   return (priorities[key]&&priorities[key].items)||[];
+}
+function setPriorityMode(m){
+  priorityMode=(m==='month')?'month':'week';
+  saveData();
+  const panel=document.getElementById('priorityEditPanel');if(panel)panel.style.display='none';
+  renderPriorityCard();
+}
+function copyPreviousPriorities(){
+  const prev=getPriorityItems(-1);
+  if(!prev.length)return;
+  priorities[getPriorityKey()]={items:prev.map(it=>Object.assign({},it))};
+  saveData();renderPriorityCard();
 }
 
 function renderPriorityCard(){
   const label=document.getElementById('priorityMonthLabel');
-  if(label)label.textContent=getMonthLabel();
+  if(label)label.textContent=getPriorityLabel();
+  const bw=document.getElementById('priorityModeWeek'),bm=document.getElementById('priorityModeMonth');
+  if(bw)bw.classList.toggle('active',priorityMode==='week');
+  if(bm)bm.classList.toggle('active',priorityMode==='month');
   const disp=document.getElementById('priorityDisplay');
   if(!disp)return;
-  const items=getMonthPriorityItems();
+  const items=getPriorityItems();
   const rendered=items.map(item=>{
     if(item.type==='goal'){
       const idx=item.goalIndex;
@@ -1013,7 +1048,9 @@ function renderPriorityCard(){
       return '<div style="padding:10px;background:var(--bg);border-radius:8px;margin-bottom:8px;"><strong>'+esc(item.text||'')+'</strong><div style="font-size:.75rem;color:var(--text-dim);">Custom priority</div></div>';
     }
   }).filter(Boolean).join('');
-  disp.innerHTML=rendered||'<p style="color:var(--text-dim);font-size:.9rem;margin:0;">No priorities set yet for '+getMonthLabel()+'. Tap Edit to choose up to 3.</p>';
+  const per=priorityMode==='week'?'this week':'this month',prevPer=priorityMode==='week'?'last week':'last month';
+  const hasPrev=getPriorityItems(-1).length>0;
+  disp.innerHTML=rendered||'<p style="color:var(--text-dim);font-size:.9rem;margin:0;">No priorities set yet for '+per+'. Tap Edit to choose up to 3.'+(hasPrev?' <a href="#" onclick="copyPreviousPriorities();return false;" style="color:var(--accent-dim);">Copy '+prevPer+'\'s picks</a>':'')+'</p>';
 }
 
 function togglePriorityEdit(){
@@ -1025,7 +1062,7 @@ function togglePriorityEdit(){
 }
 
 function openPriorityEditor(){
-  const items=getMonthPriorityItems();
+  const items=getPriorityItems();
   priorityEditWorking=[0,1,2].map(i=>items[i]?Object.assign({},items[i]):null);
   const panel=document.getElementById('priorityEditPanel');if(!panel)return;
   let html='';
@@ -1069,7 +1106,7 @@ function onPriorityCustomInput(slot,val){
 }
 
 function savePrioritiesFromPanel(){
-  const key=getCurrentMonthKey();
+  const key=getPriorityKey();
   const items=priorityEditWorking.filter(it=>it&&(it.type==='goal'||(it.type==='custom'&&it.text&&it.text.trim())));
   items.forEach(it=>{if(it.type==='custom')it.text=it.text.trim()});
   priorities[key]={items:items};
@@ -1486,7 +1523,7 @@ function deleteGoal(i){
 function resetAll(){if(confirm('Delete EVERYTHING?')){if(confirm('Last chance!')){localStorage.clear();location.reload()}}}
 
 function exportData(){
-  const s=JSON.stringify({goals,data,goalMetadata,categories,experiments,userProgress,priorities,exportDate:new Date().toISOString(),version:'3.1'},null,2);
+  const s=JSON.stringify({goals,data,goalMetadata,categories,experiments,userProgress,priorities,priorityMode,exportDate:new Date().toISOString(),version:'3.1'},null,2);
   const u=URL.createObjectURL(new Blob([s],{type:'application/json'})),a=document.createElement('a');
   a.href=u;a.download='life-dashboard-backup-'+getTodayKey()+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);
   alert('Data exported!');
@@ -1500,7 +1537,7 @@ function importData(ev){
       if(confirm('Replace all current data?')){
         goals=d.goals;data=d.data;goalMetadata=d.goalMetadata||{};experiments=d.experiments||[];userProgress=d.userProgress||userProgress;
         categories=d.categories||categories;
-        priorities=d.priorities||{};
+        priorities=d.priorities||{};priorityMode=d.priorityMode==='month'?'month':'week';
         if(!categories.find(c=>c.id==='uncategorized')) categories.push({id:'uncategorized',name:'✨ Uncategorized',color:'#c4a4a4'});
         saveData();alert('Imported! Refreshing...');location.reload();
       }
